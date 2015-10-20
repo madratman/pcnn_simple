@@ -23,22 +23,37 @@ typedef struct pcnn_oscillator {
 
 
 typedef struct pcnn_parameters {
-	double VF = 1.0;
-	double VL = 1.0;
-	double VT = 10.0;
+	// Multiplier for the feeding compartment at the current step.
+    double VF = 1.0;
+    
+    // Multiplier for the linking compartment at the current step.  
+    double VL = 1.0;
+    
+    // Multiplier for the threshold at the current step.    
+    double VT = 10.0;
+    
+    // Multiplier for the feeding compartment at the previous step.    
+    double AF = 0.1;
+    
+    // Multiplier for the linking compartment at the previous step.
+    double AL = 0.1;
+    
+    // Multiplier for the threshold at the previous step.
+    double AT = 0.5;
+    
+    // Synaptic weight - neighbours influence on linking compartment
+    double W = 1.0;
+    
+    // Synaptic weight - neighbours influence on feeding compartment.
+    double M = 1.0;
+    
+    // Linking strength in the network.
+    double B = 0.1;
+    
+    // Enable/disable Fast-Linking mode. Fast linking helps to overcome some of the effects of time quantisation. This process allows the linking wave to progress a lot faster than the feeding wave.
+    bool FAST_LINKING = false;
 
-	double AF = 0.1;
-	double AL = 0.1;
-	double AT = 0.5;
-
-	double W = 1.0;
-	double M = 1.0;
-
-	double B = 0.1;
-
-	bool FAST_LINKING = false;
 } pcnn_parameters;
-
 
 typedef std::vector<unsigned int>		pcnn_ensemble;
 typedef std::vector<double>				pcnn_stimulus;
