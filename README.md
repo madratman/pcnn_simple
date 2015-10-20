@@ -7,3 +7,10 @@ For the same, I am building upon the C++ core of https://github.com/annoviko/pyc
 
 - To be precise, the first commit is a direct copy of `pcnn.h, pcnn.cpp, network.h, network.cpp` from https://github.com/annoviko/pyclustering/tree/master/ccore/ccore 
 
+- To compile, do 
+```
+mkdir build
+cd build
+cmake ..
+make
+```
