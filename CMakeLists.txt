@@ -4,9 +4,12 @@ include_directories(include)
 set(CMAKE_CXX_FLAGS "-std=c++11 ${CMAKE_CXX_FLAGS}")
 
 add_library(network src/network.cpp)
-add_library(pcnn src/pcnn.cpp)
+# add_library(pcnn src/pcnn.cpp)
+add_library(pcnn_simple src/pcnn_simple.cpp)
 
 add_executable(main src/main.cpp)
 
-target_link_libraries(pcnn network)
-target_link_libraries(main pcnn network)
+# target_link_libraries(pcnn network)
+# target_link_libraries(main pcnn network)
+target_link_libraries(pcnn_simple network)
+target_link_libraries(main pcnn_simple network)
