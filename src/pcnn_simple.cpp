@@ -130,8 +130,6 @@ void pcnn::store_dynamic(const unsigned int step, pcnn_dynamic & dynamic) {
 	}
 }
 
-
-
 pcnn_dynamic::pcnn_dynamic() { }
 
 pcnn_dynamic::~pcnn_dynamic() { }
@@ -192,3 +190,11 @@ void pcnn_dynamic::allocate_time_signal(pcnn_time_signal & time_signal) const {
 		}
 	}
 }
+
+std::vector<double> pcnn_dynamic::return_dynamic(unsigned int & step) const {
+	std::vector<double> pcnn_result;
+	pcnn_result.resize(size());
+	const pcnn_network_state & state_network = (*this)[step];
+	pcnn_result = state_network.m_output;			
+	return pcnn_result;
+} 
