@@ -1,23 +1,10 @@
+// This main is just a demo to get familiar with the code base. 
+// It's extract from the GTests of the ccore of pyclustering. (hence the static keyword)
+// here: https://github.com/annoviko/pyclustering/blob/da8cdc231f615879bd6eb8c2b78a5f5cac2cd913/ccore/utcore/utest-pcnn.h
+
 #include "pcnn.h"
 #include "network.h"
-
 #include <unordered_set>
-
-static void generate_pcnn(
-		const unsigned int num_osc, 
-		const unsigned int steps, 
-		const conn_type type_conn, 
-		const pcnn_stimulus & stimulus) {
-
-	pcnn_parameters parameters;
-	pcnn network(num_osc, type_conn, parameters);
-
-	pcnn_dynamic dynamic;
-	network.simulate(steps, stimulus, dynamic);
-	
-	pcnn_time_signal time_signal;
-	dynamic.allocate_time_signal(time_signal);
-}
 
 static void template_dynamic_generation(
 		const unsigned int num_osc, 
