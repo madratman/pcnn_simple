@@ -91,6 +91,8 @@ public:
 		m_dynamic = new output_dynamic(rhs.size());
 		std::copy(rhs.cbegin(), rhs.cend(), m_dynamic->begin());
 	}
+ 
+	std::vector<double> return_dynamic(int step){};
 
 	~dynamic_data(void) { delete m_dynamic; }
 

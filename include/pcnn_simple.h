@@ -21,7 +21,6 @@ typedef struct pcnn_oscillator {
 		threshold(0.0) { }
 } pcnn_oscillator;
 
-
 typedef struct pcnn_parameters {
 	// Multiplier for the feeding compartment at the current step.
     double VF = 1.0;
@@ -101,7 +100,7 @@ public:
 
 	void allocate_time_signal(pcnn_time_signal & time_signal) const;
 
-	std::vector<double> return_dynamic(unsigned int & step) const;
+	std::vector<double> return_dynamic(int step) const;
 };
 
 

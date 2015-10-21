@@ -3,6 +3,7 @@ find_package( OpenCV REQUIRED )
 include_directories(include)
 
 set(CMAKE_CXX_FLAGS "-std=c++11 ${CMAKE_CXX_FLAGS}")
+# set(CMAKE_BUILD_TYPE Debug)
 
 add_library(network src/network.cpp)
 # add_library(pcnn src/pcnn.cpp)

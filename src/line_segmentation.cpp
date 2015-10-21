@@ -57,9 +57,12 @@ std::vector<double> pcnn_ensemble_simulate(
 	pcnn_dynamic dynamic;
 
 	// Performs static simulation of oscillatory network based on Hodgkin-Huxley neuron model.
-	network.simulate(steps, stimulus, dynamic);
+	// network.simulate(steps, stimulus, dynamic);
 
-	std::vector<double> pcnn_state = dynamic.return_dynamic(3);
+	// TODO : return a vector of vectors for all time steps
+	std::vector<double> pcnn_state; 
+	pcnn_state.resize(num_osc);
+	pcnn_state = dynamic.return_dynamic(3); // time step 3 
 	return pcnn_state;
 
 	/////* Not needed right now */////
@@ -79,14 +82,14 @@ std::vector<double> pcnn_ensemble_simulate(
 	/* minidoc ends */
 
 	// ensemble_data<pcnn_ensemble> sync_ensembles; /* holder for synchronous oscillators in the current time step */
-	// ensemble_data<pcnn_ensemble> spike_ensembles;
+	ensemble_data<pcnn_ensemble> spike_ensembles;
 	// pcnn_time_signal time_signal;
 	
 	// // Allocate clusters in line with ensembles of synchronous oscillators where each synchronous ensemble corresponds to only one cluster.
 	// dynamic.allocate_sync_ensembles(sync_ensembles);
 	
 	// // Analyses output dynamic of network and allocates spikes on each iteration as a list of indexes of oscillators.
-	// dynamic.allocate_spike_ensembles(spike_ensembles);
+	dynamic.allocate_spike_ensembles(spike_ensembles);
 	
 	// // Analyses output dynamic and calculates time signal (signal vector information) of network output.
 	// dynamic.allocate_time_signal(time_signal);
@@ -166,7 +169,13 @@ int main( int argc, char** argv )
 			}
 		}
 
-		pcnn_ensemble_simulate(pcnn_stimulus_intensity.size(), pcnn_steps, conn_type::GRID_EIGHT, pcnn_stimulus_intensity);
+		std::vector<double> pcnn_result;
+		pcnn_result.resize(pcnn_stimulus_intensity.size());
+		pcnn_result = pcnn_ensemble_simulate(pcnn_stimulus_intensity.size(), pcnn_steps, conn_type::GRID_EIGHT, pcnn_stimulus_intensity);
+
+		for(auto i = pcnn_result.begin(); i!= pcnn_result.end(); i++)
+			std::cout << * i << std::endl;
+
 
 		resize(src, src, Size(640, 360), 0, 0, INTER_CUBIC);
 		resize(hsi, hsi, Size(640, 360), 0, 0, INTER_CUBIC);
