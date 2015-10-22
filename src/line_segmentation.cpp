@@ -23,23 +23,15 @@ Mat src_gray;
 
 // how to check for inf (std::numeric_limits<double>::max()) ? It will anyway return an error (hardware segfault).
 
-std::vector<double> pcnn_dynamic_get_output(pcnn_dynamic dynamic, int num_osc) {
-	// pcnn_dynamic & dynamic = *((pcnn_dynamic *) pointer);
-
-	// pyclustering_package * package = new pyclustering_package((unsigned int) pyclustering_type_data::PYCLUSTERING_TYPE_LIST);
-	// package->size = dynamic.size();
-	// package->data = new pyclustering_package * [package->size];
-	int step = 1;
+std::vector<double> pcnn_dynamic_get_output(pcnn_dynamic dynamic, int num_osc) 
+{
+	int step = 100;
 	pcnn_network_state & current_state = dynamic[step];
 	std::vector<double> current_state_result;
 	std::cout<<"AAAAAAAAAAAAAAAAAAAAAAAAAAAAA"<<std::endl;
 	for (int i = 0; i < num_osc; i++) {
-		std::cout <<  current_state.m_output[i] << std::endl;
 		current_state_result.push_back(current_state.m_output[i]);
-		// std::cout <<  current_state.m_output[i] << std::endl;
-		// ((pyclustering_package **) package->data)[i] = create_package(&dynamic[i].m_output);
 	}
-
 	return current_state_result;
 }
 
@@ -55,8 +47,8 @@ static void template_dynamic_generation(
 		const unsigned int num_osc, 
 		const unsigned int steps, 
 		const conn_type type_conn, 
-		const pcnn_stimulus & stimulus) {
-
+		const pcnn_stimulus & stimulus) 
+{
 	pcnn_parameters parameters;
 	pcnn network(num_osc, type_conn, parameters);
 
@@ -73,8 +65,8 @@ std::vector<double> pcnn_ensemble_simulate(
 		const unsigned int steps, 
 		const conn_type type_conn, 
 		const pcnn_stimulus & stimulus, 
-		const pcnn_parameters * const params = nullptr) {
-
+		const pcnn_parameters * const params = nullptr) 
+{
 	// use default params if not specified
 	pcnn_parameters parameters;
 	if (params != nullptr) {
@@ -98,19 +90,8 @@ std::vector<double> pcnn_ensemble_simulate(
 
 	// TODO : return a vector of vectors for all time steps
 	std::vector<double> pcnn_state; 
-	// pcnn_state.resize(num_osc);
-	// dynamic.return_dynamic(3); // time step 3 
-	// pcnn_state = dynamic.return_dynamic(3); // time step 3 
-	// dynamic.dummy_method_vector();
-	dynamic.dummy_method();
-	std::cout<<"before call to dynamic method" <<std::endl;
-	// dynamic.return_dynamic_test(3); // time step 3
 	pcnn_state = pcnn_dynamic_get_output(dynamic, num_osc);
  	std::cout<<pcnn_state.size()<<std::endl;
-	std::cout<<"after call to dynamic method"<<std::endl;
-	// std::vector<double> temp = {0};
-	// return temp;
-
 	return pcnn_state;
 	/////* Not needed right now */////
 
@@ -166,7 +147,7 @@ int main( int argc, char** argv )
     
     /* Containers to define the PCNN ensemble */
     pcnn_stimulus pcnn_stimulus_intensity; // note that pcnn_stimulus is std::vector<double>. (auto-conversion)  
-    int pcnn_steps = 20; // no of pulses/iterations of PCNN.  
+    int pcnn_steps = 100; // no of pulses/iterations of PCNN.  
 
 	// for(;;)
 	// {
@@ -177,6 +158,7 @@ int main( int argc, char** argv )
 		{ 
 			std::cout<<"wtf!";
 		}
+		resize(src, src, Size(640, 360), 0, 0, INTER_CUBIC);
 
 		// convert current frame from RGB to HSI. The "quantized" I value will be used as a stimulus to the PCNN filter. 
 		Mat hsi(src.rows, src.cols, src.type());
@@ -221,45 +203,43 @@ int main( int argc, char** argv )
 		}
 		std::cout << pcnn_stimulus_intensity.size()<<endl;
 
+		/* DEBUG */
 		// for(auto i = pcnn_stimulus_intensity.begin(); i!= pcnn_stimulus_intensity.end(); i++)
 		// 	std::cout << * i << std::endl;
 
 		std::vector<double> pcnn_result;
-		// pcnn_result.resize(pcnn_stimulus_intensity.size());
-		int size_of_result = 153;
-
-		// crop image to square so as to comply with pcnn connection type GRID_EIGHT
+		int size_of_result = 360; // crop image to square so as to comply with pcnn connection type GRID_EIGHT
 		// TODO try to remove this constraint of square images
+		
 		pcnn_stimulus_intensity.resize(size_of_result*size_of_result); 
 
-
-		std::cout<<"main before call to pcnn_ensemble_simulate" <<std::endl;
 		pcnn_result = pcnn_ensemble_simulate(pcnn_stimulus_intensity.size(), pcnn_steps, conn_type::GRID_EIGHT, pcnn_stimulus_intensity);
-	 	std::cout << pcnn_result.size()<< std::endl;
-		std::cout<<"main after call to pcnn_ensemble_simulate" <<std::endl;
+	 	// std::cout << pcnn_result.size()<< std::endl;
 
-		// populate an openCV image to visualize what's going on at hardcoded time step
+		// populate a fake grayscale openCV image to visualize what's going on at hardcoded time step
 		Mat pcnn_at_step(size_of_result, size_of_result, CV_64FC1);
 
 		for(int i=0; i < pcnn_at_step.rows; ++i)
 			for(int j=0; j < pcnn_at_step.cols; ++j)
 			{
-				// pcnn_at_step.at<double>(i, j) = pcnn_result.at(i + j);	
 				pcnn_at_step.at<Vec3b>(i, j)[0] = pcnn_result.at(i + j);  
 				pcnn_at_step.at<Vec3b>(i, j)[1] = pcnn_result.at(i + j);
 				pcnn_at_step.at<Vec3b>(i, j)[2] = pcnn_result.at(i + j);
 			}
 
-		// pcnn_stimulus stimulus_test { 0, 0, 0, 0, 0, 0, 0, 0, 0}; 
+		/* DEBUG */
+		// pcnn_stimulus stimulus_test { 1, 1, 0, 
+		//								 1, 0, 0,
+		//							 	 1, 0, 0}; 
 		// template_dynamic_generation(stimulus_test.size(), 20, conn_type::GRID_EIGHT, stimulus_test);
 		// pcnn_ensemble_simulate(stimulus_test.size(), 20, conn_type::GRID_EIGHT, stimulus_test);
 
 		// for(auto i = pcnn_result.begin(); i!= pcnn_result.end(); i++)
 		// 	std::cout << * i << std::endl;
 
-
 		// resize(src, src, Size(640, 360), 0, 0, INTER_CUBIC);
 		// resize(hsi, hsi, Size(640, 360), 0, 0, INTER_CUBIC);
+		// resize(pcnn_result, pcnn_result, Size(640, 360), 0, 0, INTER_CUBIC);
 
 		namedWindow("RGB image", CV_WINDOW_AUTOSIZE);
 		namedWindow("HSI image", CV_WINDOW_AUTOSIZE);

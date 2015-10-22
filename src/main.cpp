@@ -6,21 +6,15 @@
 #include "network.h"
 #include <unordered_set>
 
-void pcnn_dynamic_get_output(pcnn_dynamic dynamic) {
-	// pcnn_dynamic & dynamic = *((pcnn_dynamic *) pointer);
-
-	// pyclustering_package * package = new pyclustering_package((unsigned int) pyclustering_type_data::PYCLUSTERING_TYPE_LIST);
-	// package->size = dynamic.size();
-	// package->data = new pyclustering_package * [package->size];
-	int step = 3;
+std::vector<double> pcnn_dynamic_get_output(pcnn_dynamic dynamic, int num_osc) {
+	int step = 100;
 	pcnn_network_state & current_state = dynamic[step];
+	std::vector<double> current_state_result;
 	std::cout<<"AAAAAAAAAAAAAAAAAAAAAAAAAAAAA"<<std::endl;
-	for (unsigned int i = 0; i < dynamic.size(); i++) {
-		std::cout <<  current_state.m_output[i] << std::endl;
-		// ((pyclustering_package **) package->data)[i] = create_package(&dynamic[i].m_output);
+	for (int i = 0; i < num_osc; i++) {
+		current_state_result.push_back(current_state.m_output[i]);
 	}
-
-	// return package;
+	return current_state_result;
 }
 
 static void template_dynamic_generation(
@@ -37,8 +31,7 @@ static void template_dynamic_generation(
 	
 	pcnn_time_signal time_signal;
 	dynamic.allocate_time_signal(time_signal);
-	dynamic.dummy_method();
-	pcnn_dynamic_get_output(dynamic);
+	pcnn_dynamic_get_output(dynamic, num_osc);
 }
 
 static void template_output_activity(

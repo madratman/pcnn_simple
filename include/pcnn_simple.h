@@ -99,13 +99,6 @@ public:
 	void allocate_spike_ensembles(ensemble_data<pcnn_ensemble> & spike_ensembles) const;
 
 	void allocate_time_signal(pcnn_time_signal & time_signal) const;
-
-	std::vector<double> return_dynamic(int step) const;
-	void return_dynamic_test(int step);
-
-	int* dummy_method() const;
-
-	std::vector<int> dummy_method_vector() const;
 };
 
 

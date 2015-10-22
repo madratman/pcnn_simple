@@ -91,13 +91,6 @@ public:
 		m_dynamic = new output_dynamic(rhs.size());
 		std::copy(rhs.cbegin(), rhs.cend(), m_dynamic->begin());
 	}
- 
-	std::vector<double> return_dynamic(int step){};
-	void return_dynamic_test(int step){std::cout<<"base class return_dynamic_test called"<<std::endl;};
-
-	int* dummy_method(){};
-
-	std::vector<int> dummy_method_vector(){};
 
 	~dynamic_data(void) { delete m_dynamic; }
 
