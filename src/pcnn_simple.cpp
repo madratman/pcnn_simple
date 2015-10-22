@@ -210,7 +210,7 @@ std::vector<double> pcnn_dynamic::return_dynamic(int step) const{
 	return temp;
 }
 
-void pcnn_dynamic::return_dynamic_test(int step) const{
+void pcnn_dynamic::return_dynamic_test(int step){
 	std::cout <<"return_dynamic_test"<<std::endl;
 	std::vector<double> pcnn_result;
 	pcnn_result.resize(size());
@@ -224,7 +224,7 @@ void pcnn_dynamic::return_dynamic_test(int step) const{
 	// return pcnn_result;
 } 
 
-int* pcnn_dynamic::dummy_method(){
+int* pcnn_dynamic::dummy_method() const{
 	std::cout<<"dummy_method"<<std::endl;
 	static int temp[10];
 	for(int i = 0; i < 10; i++)

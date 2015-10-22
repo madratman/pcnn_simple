@@ -101,9 +101,9 @@ public:
 	void allocate_time_signal(pcnn_time_signal & time_signal) const;
 
 	std::vector<double> return_dynamic(int step) const;
-	void return_dynamic_test(int step) const;
+	void return_dynamic_test(int step);
 
-	int* dummy_method();
+	int* dummy_method() const;
 
 	std::vector<int> dummy_method_vector() const;
 };

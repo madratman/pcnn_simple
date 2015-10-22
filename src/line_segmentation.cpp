@@ -22,6 +22,24 @@ Mat src_gray;
 // on Y0 and Y : Edge = Y0 ⊕ Y
 
 // how to check for inf (std::numeric_limits<double>::max()) ? It will anyway return an error (hardware segfault).
+
+void pcnn_dynamic_get_output(pcnn_dynamic dynamic) {
+	// pcnn_dynamic & dynamic = *((pcnn_dynamic *) pointer);
+
+	// pyclustering_package * package = new pyclustering_package((unsigned int) pyclustering_type_data::PYCLUSTERING_TYPE_LIST);
+	// package->size = dynamic.size();
+	// package->data = new pyclustering_package * [package->size];
+	int step = 1;
+	pcnn_network_state & current_state = dynamic[step];
+	std::cout<<"AAAAAAAAAAAAAAAAAAAAAAAAAAAAA"<<std::endl;
+	for (unsigned int i = 0; i < dynamic.size(); i++) {
+		std::cout <<  current_state.m_output[i] << std::endl;
+		// ((pyclustering_package **) package->data)[i] = create_package(&dynamic[i].m_output);
+	}
+
+	// return package;
+}
+
 double safe_division(double num, double den) 
 {
 	if (abs(den) > std::numeric_limits<double>::epsilon())
@@ -83,7 +101,9 @@ std::vector<double> pcnn_ensemble_simulate(
 	// dynamic.dummy_method_vector();
 	dynamic.dummy_method();
 	std::cout<<"before call to dynamic method" <<std::endl;
-	dynamic.return_dynamic_test(3); // time step 3 
+	// dynamic.return_dynamic_test(3); // time step 3
+	pcnn_dynamic_get_output(dynamic);
+ 
 	std::cout<<"after call to dynamic method"<<std::endl;
 	std::vector<double> temp = {0};
 	return temp;
@@ -142,7 +162,7 @@ int main( int argc, char** argv )
     
     /* Containers to define the PCNN ensemble */
     pcnn_stimulus pcnn_stimulus_intensity; // note that pcnn_stimulus is std::vector<double>. (auto-conversion)  
-    int pcnn_steps = 4; // no of pulses/iterations of PCNN.  
+    int pcnn_steps = 20; // no of pulses/iterations of PCNN.  
 
 	// for(;;)
 	// {
@@ -208,7 +228,7 @@ int main( int argc, char** argv )
 		pcnn_ensemble_simulate(pcnn_stimulus_intensity.size(), pcnn_steps, conn_type::GRID_EIGHT, pcnn_stimulus_intensity);
 		std::cout<<"main after call to pcnn_ensemble_simulate" <<std::endl;
 		
-		pcnn_stimulus stimulus_test { 0, 0, 0, 0, 0, 0, 0, 0, 0}; 
+		// pcnn_stimulus stimulus_test { 0, 0, 0, 0, 0, 0, 0, 0, 0}; 
 		// template_dynamic_generation(stimulus_test.size(), 20, conn_type::GRID_EIGHT, stimulus_test);
 		// pcnn_ensemble_simulate(stimulus_test.size(), 20, conn_type::GRID_EIGHT, stimulus_test);
 

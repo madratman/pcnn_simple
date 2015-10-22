@@ -95,7 +95,7 @@ public:
 	std::vector<double> return_dynamic(int step){};
 	void return_dynamic_test(int step){std::cout<<"base class return_dynamic_test called"<<std::endl;};
 
-	// int* dummy_method(){std::cout<<"base class dummy method called"<<std::endl;};
+	int* dummy_method(){};
 
 	std::vector<int> dummy_method_vector(){};
 

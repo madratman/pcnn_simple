@@ -6,6 +6,23 @@
 #include "network.h"
 #include <unordered_set>
 
+void pcnn_dynamic_get_output(pcnn_dynamic dynamic) {
+	// pcnn_dynamic & dynamic = *((pcnn_dynamic *) pointer);
+
+	// pyclustering_package * package = new pyclustering_package((unsigned int) pyclustering_type_data::PYCLUSTERING_TYPE_LIST);
+	// package->size = dynamic.size();
+	// package->data = new pyclustering_package * [package->size];
+	int step = 3;
+	pcnn_network_state & current_state = dynamic[step];
+	std::cout<<"AAAAAAAAAAAAAAAAAAAAAAAAAAAAA"<<std::endl;
+	for (unsigned int i = 0; i < dynamic.size(); i++) {
+		std::cout <<  current_state.m_output[i] << std::endl;
+		// ((pyclustering_package **) package->data)[i] = create_package(&dynamic[i].m_output);
+	}
+
+	// return package;
+}
+
 static void template_dynamic_generation(
 		const unsigned int num_osc, 
 		const unsigned int steps, 
@@ -20,6 +37,8 @@ static void template_dynamic_generation(
 	
 	pcnn_time_signal time_signal;
 	dynamic.allocate_time_signal(time_signal);
+	dynamic.dummy_method();
+	pcnn_dynamic_get_output(dynamic);
 }
 
 static void template_output_activity(
@@ -102,7 +121,7 @@ static void template_ensemble_allocation(
 
 int main()
 {
-	pcnn_stimulus stimulus { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }; 
+	pcnn_stimulus stimulus { 0, 0, 0, 0, 0, 0, 0, 0, 0}; 
 	template_dynamic_generation(stimulus.size(), 20, conn_type::GRID_EIGHT, stimulus);
 	template_output_activity(stimulus.size(), 30, conn_type::GRID_EIGHT, stimulus, true);
 
