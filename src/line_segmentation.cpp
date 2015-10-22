@@ -23,7 +23,7 @@ Mat src_gray;
 
 // how to check for inf (std::numeric_limits<double>::max()) ? It will anyway return an error (hardware segfault).
 
-void pcnn_dynamic_get_output(pcnn_dynamic dynamic) {
+std::vector<double> pcnn_dynamic_get_output(pcnn_dynamic dynamic, int num_osc) {
 	// pcnn_dynamic & dynamic = *((pcnn_dynamic *) pointer);
 
 	// pyclustering_package * package = new pyclustering_package((unsigned int) pyclustering_type_data::PYCLUSTERING_TYPE_LIST);
@@ -31,13 +31,16 @@ void pcnn_dynamic_get_output(pcnn_dynamic dynamic) {
 	// package->data = new pyclustering_package * [package->size];
 	int step = 1;
 	pcnn_network_state & current_state = dynamic[step];
+	std::vector<double> current_state_result;
 	std::cout<<"AAAAAAAAAAAAAAAAAAAAAAAAAAAAA"<<std::endl;
-	for (unsigned int i = 0; i < dynamic.size(); i++) {
+	for (int i = 0; i < num_osc; i++) {
 		std::cout <<  current_state.m_output[i] << std::endl;
+		current_state_result.push_back(current_state.m_output[i]);
+		// std::cout <<  current_state.m_output[i] << std::endl;
 		// ((pyclustering_package **) package->data)[i] = create_package(&dynamic[i].m_output);
 	}
 
-	// return package;
+	return current_state_result;
 }
 
 double safe_division(double num, double den) 
@@ -102,12 +105,13 @@ std::vector<double> pcnn_ensemble_simulate(
 	dynamic.dummy_method();
 	std::cout<<"before call to dynamic method" <<std::endl;
 	// dynamic.return_dynamic_test(3); // time step 3
-	pcnn_dynamic_get_output(dynamic);
- 
+	pcnn_state = pcnn_dynamic_get_output(dynamic, num_osc);
+ 	std::cout<<pcnn_state.size()<<std::endl;
 	std::cout<<"after call to dynamic method"<<std::endl;
-	std::vector<double> temp = {0};
-	return temp;
+	// std::vector<double> temp = {0};
+	// return temp;
 
+	return pcnn_state;
 	/////* Not needed right now */////
 
 	/* minidoc so that my head doesn't spin after a week reading this code */	
@@ -222,12 +226,30 @@ int main( int argc, char** argv )
 
 		std::vector<double> pcnn_result;
 		// pcnn_result.resize(pcnn_stimulus_intensity.size());
-		pcnn_stimulus_intensity.resize(153*153);
+		int size_of_result = 153;
+
+		// crop image to square so as to comply with pcnn connection type GRID_EIGHT
+		// TODO try to remove this constraint of square images
+		pcnn_stimulus_intensity.resize(size_of_result*size_of_result); 
+
 
 		std::cout<<"main before call to pcnn_ensemble_simulate" <<std::endl;
-		pcnn_ensemble_simulate(pcnn_stimulus_intensity.size(), pcnn_steps, conn_type::GRID_EIGHT, pcnn_stimulus_intensity);
+		pcnn_result = pcnn_ensemble_simulate(pcnn_stimulus_intensity.size(), pcnn_steps, conn_type::GRID_EIGHT, pcnn_stimulus_intensity);
+	 	std::cout << pcnn_result.size()<< std::endl;
 		std::cout<<"main after call to pcnn_ensemble_simulate" <<std::endl;
-		
+
+		// populate an openCV image to visualize what's going on at hardcoded time step
+		Mat pcnn_at_step(size_of_result, size_of_result, CV_64FC1);
+
+		for(int i=0; i < pcnn_at_step.rows; ++i)
+			for(int j=0; j < pcnn_at_step.cols; ++j)
+			{
+				// pcnn_at_step.at<double>(i, j) = pcnn_result.at(i + j);	
+				pcnn_at_step.at<Vec3b>(i, j)[0] = pcnn_result.at(i + j);  
+				pcnn_at_step.at<Vec3b>(i, j)[1] = pcnn_result.at(i + j);
+				pcnn_at_step.at<Vec3b>(i, j)[2] = pcnn_result.at(i + j);
+			}
+
 		// pcnn_stimulus stimulus_test { 0, 0, 0, 0, 0, 0, 0, 0, 0}; 
 		// template_dynamic_generation(stimulus_test.size(), 20, conn_type::GRID_EIGHT, stimulus_test);
 		// pcnn_ensemble_simulate(stimulus_test.size(), 20, conn_type::GRID_EIGHT, stimulus_test);
@@ -241,9 +263,11 @@ int main( int argc, char** argv )
 
 		namedWindow("RGB image", CV_WINDOW_AUTOSIZE);
 		namedWindow("HSI image", CV_WINDOW_AUTOSIZE);
+		namedWindow("pcnn result", CV_WINDOW_AUTOSIZE);
 
 		imshow("RGB image", src);
 		imshow("HSI image", hsi);
+		imshow("pcnn result", pcnn_at_step);
 
 	/*	Mat display = Mat::zeros( src.rows, (2*src.cols) + (20), src.type() );
 
@@ -262,6 +286,6 @@ int main( int argc, char** argv )
 		// waitKey(1);
 	// }
 
-	// waitKey(0);
+	waitKey(0);
 	return 0;
 }
