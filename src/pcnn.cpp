@@ -1,5 +1,4 @@
- 	#include "pcnn.h"
-
+#include "pcnn.h"	 
 #include <unordered_set>
 
 pcnn::pcnn(const unsigned int size, const conn_type connection_type, const pcnn_parameters & parameters) :

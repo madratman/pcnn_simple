@@ -29,7 +29,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <vector>
 #include <stdexcept>
 #include <memory>
-
+#include <iostream>
 #define MAXIMUM_OSCILLATORS_MATRIX_REPRESENTATION	(unsigned int) 4096
 
 typedef enum initial_type {
@@ -93,6 +93,11 @@ public:
 	}
  
 	std::vector<double> return_dynamic(int step){};
+	void return_dynamic_test(int step){std::cout<<"base class return_dynamic_test called"<<std::endl;};
+
+	// int* dummy_method(){std::cout<<"base class dummy method called"<<std::endl;};
+
+	std::vector<int> dummy_method_vector(){};
 
 	~dynamic_data(void) { delete m_dynamic; }
 

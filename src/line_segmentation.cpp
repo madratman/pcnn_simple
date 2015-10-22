@@ -30,6 +30,22 @@ double safe_division(double num, double den)
 		return num/std::numeric_limits<double>::epsilon();
 }
 
+static void template_dynamic_generation(
+		const unsigned int num_osc, 
+		const unsigned int steps, 
+		const conn_type type_conn, 
+		const pcnn_stimulus & stimulus) {
+
+	pcnn_parameters parameters;
+	pcnn network(num_osc, type_conn, parameters);
+
+	pcnn_dynamic dynamic;
+	network.simulate(steps, stimulus, dynamic);
+	
+	pcnn_time_signal time_signal;
+	dynamic.allocate_time_signal(time_signal);
+}
+
 // generates, simulates PCNN. Returns a vector of outputs at a hardcoded timestep 
 std::vector<double> pcnn_ensemble_simulate(
 		const unsigned int num_osc, 
@@ -57,13 +73,20 @@ std::vector<double> pcnn_ensemble_simulate(
 	pcnn_dynamic dynamic;
 
 	// Performs static simulation of oscillatory network based on Hodgkin-Huxley neuron model.
-	// network.simulate(steps, stimulus, dynamic);
+	network.simulate(steps, stimulus, dynamic);
 
 	// TODO : return a vector of vectors for all time steps
 	std::vector<double> pcnn_state; 
-	pcnn_state.resize(num_osc);
-	pcnn_state = dynamic.return_dynamic(3); // time step 3 
-	return pcnn_state;
+	// pcnn_state.resize(num_osc);
+	// dynamic.return_dynamic(3); // time step 3 
+	// pcnn_state = dynamic.return_dynamic(3); // time step 3 
+	// dynamic.dummy_method_vector();
+	dynamic.dummy_method();
+	std::cout<<"before call to dynamic method" <<std::endl;
+	dynamic.return_dynamic_test(3); // time step 3 
+	std::cout<<"after call to dynamic method"<<std::endl;
+	std::vector<double> temp = {0};
+	return temp;
 
 	/////* Not needed right now */////
 
@@ -82,14 +105,14 @@ std::vector<double> pcnn_ensemble_simulate(
 	/* minidoc ends */
 
 	// ensemble_data<pcnn_ensemble> sync_ensembles; /* holder for synchronous oscillators in the current time step */
-	ensemble_data<pcnn_ensemble> spike_ensembles;
+	// ensemble_data<pcnn_ensemble> spike_ensembles;
 	// pcnn_time_signal time_signal;
 	
 	// // Allocate clusters in line with ensembles of synchronous oscillators where each synchronous ensemble corresponds to only one cluster.
 	// dynamic.allocate_sync_ensembles(sync_ensembles);
 	
 	// // Analyses output dynamic of network and allocates spikes on each iteration as a list of indexes of oscillators.
-	dynamic.allocate_spike_ensembles(spike_ensembles);
+	// dynamic.allocate_spike_ensembles(spike_ensembles);
 	
 	// // Analyses output dynamic and calculates time signal (signal vector information) of network output.
 	// dynamic.allocate_time_signal(time_signal);
@@ -119,12 +142,13 @@ int main( int argc, char** argv )
     
     /* Containers to define the PCNN ensemble */
     pcnn_stimulus pcnn_stimulus_intensity; // note that pcnn_stimulus is std::vector<double>. (auto-conversion)  
-    int pcnn_steps = 20; // no of pulses/iterations of PCNN.  
+    int pcnn_steps = 4; // no of pulses/iterations of PCNN.  
 
-	for(;;)
-	{
+	// for(;;)
+	// {
 		// Read the current frame from the video
-		input_video >> src;
+		// input_video >> src;
+		src = imread(argv[1], CV_LOAD_IMAGE_COLOR); 
 		if(src.empty())
 		{ 
 			std::cout<<"wtf!";
@@ -133,6 +157,8 @@ int main( int argc, char** argv )
 		// convert current frame from RGB to HSI. The "quantized" I value will be used as a stimulus to the PCNN filter. 
 		Mat hsi(src.rows, src.cols, src.type());
 
+		std::cout << src.rows << " "<< src.cols<<endl;
+		int test;
 		for(int i = 0; i < src.rows; i++)
 		{
 			for(int j = 0; j < src.cols; j++)
@@ -146,6 +172,7 @@ int main( int argc, char** argv )
 				intensity_quantized_visualize = 4*intensity_quantized; // throttle up to [0:4:255] to visualize what's going on 
 				
 				// the intensity_quantized is the input to our PCNN. 
+				// std::cout<< i << "   " << j << "    " << intensity_quantized<<endl;
 				pcnn_stimulus_intensity.push_back(intensity_quantized);
 
 				int minimum_rgb = 0;
@@ -168,17 +195,29 @@ int main( int argc, char** argv )
 				hsi.at<Vec3b>(i, j)[2] = intensity_quantized_visualize; // [0:1:63]
 			}
 		}
+		std::cout << pcnn_stimulus_intensity.size()<<endl;
+
+		// for(auto i = pcnn_stimulus_intensity.begin(); i!= pcnn_stimulus_intensity.end(); i++)
+		// 	std::cout << * i << std::endl;
 
 		std::vector<double> pcnn_result;
-		pcnn_result.resize(pcnn_stimulus_intensity.size());
-		pcnn_result = pcnn_ensemble_simulate(pcnn_stimulus_intensity.size(), pcnn_steps, conn_type::GRID_EIGHT, pcnn_stimulus_intensity);
+		// pcnn_result.resize(pcnn_stimulus_intensity.size());
+		pcnn_stimulus_intensity.resize(153*153);
 
-		for(auto i = pcnn_result.begin(); i!= pcnn_result.end(); i++)
-			std::cout << * i << std::endl;
+		std::cout<<"main before call to pcnn_ensemble_simulate" <<std::endl;
+		pcnn_ensemble_simulate(pcnn_stimulus_intensity.size(), pcnn_steps, conn_type::GRID_EIGHT, pcnn_stimulus_intensity);
+		std::cout<<"main after call to pcnn_ensemble_simulate" <<std::endl;
+		
+		pcnn_stimulus stimulus_test { 0, 0, 0, 0, 0, 0, 0, 0, 0}; 
+		// template_dynamic_generation(stimulus_test.size(), 20, conn_type::GRID_EIGHT, stimulus_test);
+		// pcnn_ensemble_simulate(stimulus_test.size(), 20, conn_type::GRID_EIGHT, stimulus_test);
+
+		// for(auto i = pcnn_result.begin(); i!= pcnn_result.end(); i++)
+		// 	std::cout << * i << std::endl;
 
 
-		resize(src, src, Size(640, 360), 0, 0, INTER_CUBIC);
-		resize(hsi, hsi, Size(640, 360), 0, 0, INTER_CUBIC);
+		// resize(src, src, Size(640, 360), 0, 0, INTER_CUBIC);
+		// resize(hsi, hsi, Size(640, 360), 0, 0, INTER_CUBIC);
 
 		namedWindow("RGB image", CV_WINDOW_AUTOSIZE);
 		namedWindow("HSI image", CV_WINDOW_AUTOSIZE);
@@ -200,9 +239,9 @@ int main( int argc, char** argv )
 		// write to output_video
 		output_video << display; */
 
-		waitKey(1);
-	}
+		// waitKey(1);
+	// }
 
-	waitKey(0);
+	// waitKey(0);
 	return 0;
 }

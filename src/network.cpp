@@ -28,7 +28,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <exception>
 #include <stdexcept>
 #include <algorithm>
-
+#include <iostream>
 
 network::network(const unsigned int number_oscillators, const conn_type connection_type) {
 	num_osc = number_oscillators;
@@ -198,8 +198,11 @@ void network::create_list_bidir_connections() {
 }
 
 void network::create_grid_four_connections() {
+	std::cout<< "num_osc " << num_osc <<std::endl;
 	const double conv_side_size = std::sqrt((double) num_osc);
 	if (conv_side_size - std::floor(conv_side_size) > 0) {
+		std::cout<< "conv_side_size "<<conv_side_size<<std::endl;
+		std::cout<< "std::floor(conv_side_size) "<<std::floor(conv_side_size)<<std::endl;
 		throw std::runtime_error("Invalid number of oscillators in the network for the grid structure");
 	}
 

@@ -1,5 +1,6 @@
 #include "pcnn_simple.h"	 
 #include <unordered_set>
+#include <iostream>
 
 pcnn::pcnn(const unsigned int size, const conn_type connection_type, const pcnn_parameters & parameters) :
 	m_oscillators(size, pcnn_oscillator()), 
@@ -11,6 +12,7 @@ pcnn::pcnn(const unsigned int size, const conn_type connection_type, const pcnn_
 pcnn::~pcnn() { }
 
 void pcnn::simulate(const unsigned int steps, const pcnn_stimulus & stimulus, pcnn_dynamic & output_dynamic) {
+	std::cout<<"simulate with "<< steps << " no of steps "<< std::endl;;
 	output_dynamic.resize(steps, size());
 
 	for (unsigned int i = 0; i < steps; i++) {
@@ -73,6 +75,7 @@ void pcnn::calculate_states(const pcnn_stimulus & stimulus) {
 			oscillator.threshold *= m_params.AT; // penalize if it has pulsed
 		}
 	}
+	std::cout<<"calculate_states ";
 }
 
 // void pcnn::fast_linking(const std::vector<double> & feeding, std::vector<double> & linking, std::vector<double> & output) {
@@ -128,11 +131,12 @@ void pcnn::store_dynamic(const unsigned int step, pcnn_dynamic & dynamic) {
 	for (size_t i = 0; i < m_oscillators.size(); i++) {
 		current_state.m_output[i] = m_oscillators[i].output;
 	}
+	std::cout<<"store_dynamic"<<std::endl;
 }
 
-pcnn_dynamic::pcnn_dynamic() { }
+pcnn_dynamic::pcnn_dynamic() {}
 
-pcnn_dynamic::~pcnn_dynamic() { }
+pcnn_dynamic::~pcnn_dynamic() {std::cout<<"pcnn_dynamic destructor"<<std::endl; }
 
 /* TODO: implementation */
 pcnn_dynamic::pcnn_dynamic(const unsigned int number_oscillators, const unsigned int simulation_steps) { }
@@ -192,9 +196,51 @@ void pcnn_dynamic::allocate_time_signal(pcnn_time_signal & time_signal) const {
 }
 
 std::vector<double> pcnn_dynamic::return_dynamic(int step) const{
+	// std::vector<double> pcnn_result;
+	// pcnn_result.resize(size());
+	// const pcnn_network_state & state_network = (*this)[step];
+
+	// for(auto i = state_network.begin(); i!= state_network.end(); i++)
+	// 	std::cout <<  *i.m_output << std::endl;
+
+	// pcnn_result = state_network.m_output;		
+	// return pcnn_result;
+
+	std::vector<double> temp = {0};
+	return temp;
+}
+
+void pcnn_dynamic::return_dynamic_test(int step) const{
+	std::cout <<"return_dynamic_test"<<std::endl;
 	std::vector<double> pcnn_result;
 	pcnn_result.resize(size());
-	const pcnn_network_state & state_network = (*this)[step];
-	pcnn_result = state_network.m_output;		
-	return pcnn_result;
+	// const pcnn_network_state & state_network = (*this)[step];
+
+	pcnn_network_state & current_state = (pcnn_network_state &) (*this)[step];
+	for(size_t i = 0; i < number_oscillators(); i++)
+		std::cout <<  current_state.m_output[i] << std::endl;
+
+	// pcnn_result = state_network.m_output;		
+	// return pcnn_result;
 } 
+
+int* pcnn_dynamic::dummy_method(){
+	std::cout<<"dummy_method"<<std::endl;
+	static int temp[10];
+	for(int i = 0; i < 10; i++)
+	{
+		temp[i] = i;
+	}
+	return temp;
+}
+
+// This simple method causes 
+// *** Error in `./line_segmentation': double free or corruption (out): 0x00007ffe33f1a8b0 ***
+// Aborted (core dumped)
+// aargh, time sinks.
+
+std::vector<int> pcnn_dynamic::dummy_method_vector() const{
+	std::cout<<"dummy_method"<<std::endl;
+ 	std::vector<int> vector(10);
+    return vector;
+}
