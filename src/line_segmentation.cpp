@@ -9,7 +9,7 @@
 #include <stdio.h>
 
 using namespace cv;
-using namespace std;
+using namespace std; // hashtag bad practice
 
 Mat src, edges;
 Mat src_gray;
@@ -26,14 +26,16 @@ Mat src_gray;
 vector< vector<double> > pcnn_dynamic_get_output(pcnn_dynamic dynamic, int num_osc) 
 {
 	vector< vector<double> > pcnn_data;
-	pcnn_data.reserve(num_osc*dynamic.size());
+	pcnn_data.resize( dynamic.size() );
 
 	for (int step = 0; step < dynamic.size(); step++)
 	{
+		pcnn_data[step].resize(num_osc);
 		pcnn_network_state & current_state = dynamic[step];
+
 		for (int i = 0; i < num_osc; i++) 
 		{
-			pcnn_data[step].push_back(current_state.m_output[i]);
+			pcnn_data[step][i] = current_state.m_output[i];
 		}
 	}
 
@@ -79,8 +81,10 @@ vector< vector<double> >  pcnn_ensemble_simulate(
 
 	// TODO : return a vector of vectors for all time steps
 	vector< vector<double> >  pcnn_state; 
+
+	// pcnn_state.resize( num_osc * dynamic.size() );
 	pcnn_state = pcnn_dynamic_get_output(dynamic, num_osc);
- 	std::cout<<pcnn_state.size()<<std::endl;
+
 	return pcnn_state;
 
 	/////* Not needed right now */////
@@ -191,39 +195,35 @@ int main( int argc, char** argv )
 				hsi.at<Vec3b>(i, j)[2] = intensity_quantized_visualize; // [0:1:63]
 			}
 		}
-		std::cout << pcnn_stimulus_intensity.size()<<endl;
-
-		/* DEBUG */
-		// for(auto i = pcnn_stimulus_intensity.begin(); i!= pcnn_stimulus_intensity.end(); i++)
-		// 	std::cout << * i << std::endl;
 
 		vector< vector<double> > pcnn_result;
 		int size_of_result = 148; // crop image to square so as to comply with pcnn connection type GRID_EIGHT
 		// TODO try to remove this constraint of square images
 		
 		pcnn_stimulus_intensity.resize(size_of_result*size_of_result); 
+		// pcnn_result.resize( pcnn_stimulus_intensity.size() * pcnn_steps );
 
 		pcnn_result = pcnn_ensemble_simulate(pcnn_stimulus_intensity.size(), pcnn_steps, conn_type::GRID_EIGHT, pcnn_stimulus_intensity);
 
 		// populate a vector of fake grayscale openCV image to visualize what's going on.
 		// Following block could be optimized. But in the end, we ll need to visualize at a specified time step only, so it doesn't matter
-		vector<Mat> pcnn_images(pcnn_steps);
-		pcnn_images.reserve(pcnn_steps);
+		vector<Mat> pcnn_images;
 		vector<double> pcnn_result_current_step;
 		
 		for(int index = 0; index < pcnn_steps; index++)
-		{
+		{	
 			pcnn_result_current_step = pcnn_result[index];
 			Mat pcnn_image_current(size_of_result, size_of_result, src.type());
 			// Mat pcnn_image_current(size_of_result, size_of_result, src.type(), &pcnn_result_current_step.front()); 
 
-			for(int i=0; i < pcnn_image_current.rows; i++)
+			for(int i = 0; i < pcnn_image_current.rows; i++)
 			{
-				for(int j=0; j < pcnn_image_current.cols; j++)
-				{
-					pcnn_image_current.at<Vec3b>(i, j)[0] = pcnn_result_current_step.at(i + j);  
-					pcnn_image_current.at<Vec3b>(i, j)[1] = pcnn_result_current_step.at(i + j);
-					pcnn_image_current.at<Vec3b>(i, j)[2] = pcnn_result_current_step.at(i + j);
+				for(int j = 0; j < pcnn_image_current.cols; j++)
+				{	
+					std::cout << "output at pulse no " << index << ", pixel (" << i << ", " << j << ") is " << pcnn_result_current_step.at(i*size_of_result + j) << std::endl;
+					pcnn_image_current.at<Vec3b>(i, j)[0] = pcnn_result_current_step.at(i*size_of_result + j);  
+					pcnn_image_current.at<Vec3b>(i, j)[1] = pcnn_result_current_step.at(i*size_of_result + j);
+					pcnn_image_current.at<Vec3b>(i, j)[2] = pcnn_result_current_step.at(i*size_of_result + j);
 				}
 			}
 
@@ -248,7 +248,7 @@ int main( int argc, char** argv )
 		namedWindow("HSI image", CV_WINDOW_AUTOSIZE);
 		namedWindow("pcnn result", CV_WINDOW_AUTOSIZE);
 
-		Mat pcnn_view = pcnn_images[5];
+		Mat pcnn_view = pcnn_images[9];
 		imshow("RGB image", src);
 		imshow("HSI image", hsi);
 		imshow("pcnn result", pcnn_view);
@@ -270,6 +270,6 @@ int main( int argc, char** argv )
 		// waitKey(1);
 	// }
 
-	waitKey(0);
+	// waitKey(0);
 	return 0;
 }
