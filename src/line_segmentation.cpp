@@ -26,6 +26,8 @@ Mat src_gray;
 vector< vector<double> > pcnn_dynamic_get_output(pcnn_dynamic dynamic, int num_osc) 
 {
 	vector< vector<double> > pcnn_data;
+	pcnn_data.reserve(num_osc*dynamic.size());
+
 	for (int step = 0; step < dynamic.size(); step++)
 	{
 		pcnn_network_state & current_state = dynamic[step];
@@ -34,6 +36,7 @@ vector< vector<double> > pcnn_dynamic_get_output(pcnn_dynamic dynamic, int num_o
 			pcnn_data[step].push_back(current_state.m_output[i]);
 		}
 	}
+
 	return pcnn_data;
 }
 
@@ -43,22 +46,6 @@ double safe_division(double num, double den)
 		return num/den;
 	else
 		return num/std::numeric_limits<double>::epsilon();
-}
-
-static void template_dynamic_generation(
-		const unsigned int num_osc, 
-		const unsigned int steps, 
-		const conn_type type_conn, 
-		const pcnn_stimulus & stimulus) 
-{
-	pcnn_parameters parameters;
-	pcnn network(num_osc, type_conn, parameters);
-
-	pcnn_dynamic dynamic;
-	network.simulate(steps, stimulus, dynamic);
-	
-	pcnn_time_signal time_signal;
-	dynamic.allocate_time_signal(time_signal);
 }
 
 // generates, simulates PCNN. Returns a vector of outputs at a hardcoded timestep 
@@ -95,6 +82,7 @@ vector< vector<double> >  pcnn_ensemble_simulate(
 	pcnn_state = pcnn_dynamic_get_output(dynamic, num_osc);
  	std::cout<<pcnn_state.size()<<std::endl;
 	return pcnn_state;
+
 	/////* Not needed right now */////
 
 	/* minidoc so that my head doesn't spin after a week reading this code */	
@@ -149,7 +137,7 @@ int main( int argc, char** argv )
     
     /* Containers to define the PCNN ensemble */
     pcnn_stimulus pcnn_stimulus_intensity; // note that pcnn_stimulus is std::vector<double>. (auto-conversion)  
-    int pcnn_steps = 100; // no of pulses/iterations of PCNN.  
+    int pcnn_steps = 10; // no of pulses/iterations of PCNN.  
 
 	// for(;;)
 	// {
@@ -160,7 +148,7 @@ int main( int argc, char** argv )
 		{ 
 			std::cout<<"wtf!";
 		}
-		resize(src, src, Size(640, 360), 0, 0, INTER_CUBIC);
+		// resize(src, src, Size(640, 360), 0, 0, INTER_CUBIC);
 
 		// convert current frame from RGB to HSI. The "quantized" I value will be used as a stimulus to the PCNN filter. 
 		Mat hsi(src.rows, src.cols, src.type());
@@ -210,25 +198,24 @@ int main( int argc, char** argv )
 		// 	std::cout << * i << std::endl;
 
 		vector< vector<double> > pcnn_result;
-		int size_of_result = 360; // crop image to square so as to comply with pcnn connection type GRID_EIGHT
+		int size_of_result = 148; // crop image to square so as to comply with pcnn connection type GRID_EIGHT
 		// TODO try to remove this constraint of square images
 		
 		pcnn_stimulus_intensity.resize(size_of_result*size_of_result); 
 
 		pcnn_result = pcnn_ensemble_simulate(pcnn_stimulus_intensity.size(), pcnn_steps, conn_type::GRID_EIGHT, pcnn_stimulus_intensity);
-	 	// std::cout << pcnn_result.size()<< std::endl;
 
 		// populate a vector of fake grayscale openCV image to visualize what's going on.
 		// Following block could be optimized. But in the end, we ll need to visualize at a specified time step only, so it doesn't matter
 		vector<Mat> pcnn_images(pcnn_steps);
+		pcnn_images.reserve(pcnn_steps);
 		vector<double> pcnn_result_current_step;
-
-		// for(auto iter = pcnn_images.begin(); iter != pcnn_images.end(); iter++)
-		    // int index = std::distance(pcnn_images.begin(), iter);
+		
 		for(int index = 0; index < pcnn_steps; index++)
 		{
-			Mat pcnn_image_current(size_of_result, size_of_result, src.type());
 			pcnn_result_current_step = pcnn_result[index];
+			Mat pcnn_image_current(size_of_result, size_of_result, src.type());
+			// Mat pcnn_image_current(size_of_result, size_of_result, src.type(), &pcnn_result_current_step.front()); 
 
 			for(int i=0; i < pcnn_image_current.rows; i++)
 			{
@@ -239,6 +226,7 @@ int main( int argc, char** argv )
 					pcnn_image_current.at<Vec3b>(i, j)[2] = pcnn_result_current_step.at(i + j);
 				}
 			}
+
 			pcnn_images.push_back(pcnn_image_current);
 		}
 
@@ -260,9 +248,10 @@ int main( int argc, char** argv )
 		namedWindow("HSI image", CV_WINDOW_AUTOSIZE);
 		namedWindow("pcnn result", CV_WINDOW_AUTOSIZE);
 
+		Mat pcnn_view = pcnn_images[5];
 		imshow("RGB image", src);
 		imshow("HSI image", hsi);
-		// imshow("pcnn result", pcnn_at_step);
+		imshow("pcnn result", pcnn_view);
 
 	/*	Mat display = Mat::zeros( src.rows, (2*src.cols) + (20), src.type() );
 
