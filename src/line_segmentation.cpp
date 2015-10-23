@@ -23,16 +23,18 @@ Mat src_gray;
 
 // how to check for inf (std::numeric_limits<double>::max()) ? It will anyway return an error (hardware segfault).
 
-std::vector<double> pcnn_dynamic_get_output(pcnn_dynamic dynamic, int num_osc) 
+vector< vector<double> > pcnn_dynamic_get_output(pcnn_dynamic dynamic, int num_osc) 
 {
-	int step = 100;
-	pcnn_network_state & current_state = dynamic[step];
-	std::vector<double> current_state_result;
-	std::cout<<"AAAAAAAAAAAAAAAAAAAAAAAAAAAAA"<<std::endl;
-	for (int i = 0; i < num_osc; i++) {
-		current_state_result.push_back(current_state.m_output[i]);
+	vector< vector<double> > pcnn_data;
+	for (int step = 0; step < dynamic.size(); step++)
+	{
+		pcnn_network_state & current_state = dynamic[step];
+		for (int i = 0; i < num_osc; i++) 
+		{
+			pcnn_data[step].push_back(current_state.m_output[i]);
+		}
 	}
-	return current_state_result;
+	return pcnn_data;
 }
 
 double safe_division(double num, double den) 
@@ -60,7 +62,7 @@ static void template_dynamic_generation(
 }
 
 // generates, simulates PCNN. Returns a vector of outputs at a hardcoded timestep 
-std::vector<double> pcnn_ensemble_simulate(
+vector< vector<double> >  pcnn_ensemble_simulate(
 		const unsigned int num_osc, 
 		const unsigned int steps, 
 		const conn_type type_conn, 
@@ -89,7 +91,7 @@ std::vector<double> pcnn_ensemble_simulate(
 	network.simulate(steps, stimulus, dynamic);
 
 	// TODO : return a vector of vectors for all time steps
-	std::vector<double> pcnn_state; 
+	vector< vector<double> >  pcnn_state; 
 	pcnn_state = pcnn_dynamic_get_output(dynamic, num_osc);
  	std::cout<<pcnn_state.size()<<std::endl;
 	return pcnn_state;
@@ -207,7 +209,7 @@ int main( int argc, char** argv )
 		// for(auto i = pcnn_stimulus_intensity.begin(); i!= pcnn_stimulus_intensity.end(); i++)
 		// 	std::cout << * i << std::endl;
 
-		std::vector<double> pcnn_result;
+		vector< vector<double> > pcnn_result;
 		int size_of_result = 360; // crop image to square so as to comply with pcnn connection type GRID_EIGHT
 		// TODO try to remove this constraint of square images
 		
@@ -216,16 +218,29 @@ int main( int argc, char** argv )
 		pcnn_result = pcnn_ensemble_simulate(pcnn_stimulus_intensity.size(), pcnn_steps, conn_type::GRID_EIGHT, pcnn_stimulus_intensity);
 	 	// std::cout << pcnn_result.size()<< std::endl;
 
-		// populate a fake grayscale openCV image to visualize what's going on at hardcoded time step
-		Mat pcnn_at_step(size_of_result, size_of_result, CV_64FC1);
+		// populate a vector of fake grayscale openCV image to visualize what's going on.
+		// Following block could be optimized. But in the end, we ll need to visualize at a specified time step only, so it doesn't matter
+		vector<Mat> pcnn_images(pcnn_steps);
+		vector<double> pcnn_result_current_step;
 
-		for(int i=0; i < pcnn_at_step.rows; ++i)
-			for(int j=0; j < pcnn_at_step.cols; ++j)
+		// for(auto iter = pcnn_images.begin(); iter != pcnn_images.end(); iter++)
+		    // int index = std::distance(pcnn_images.begin(), iter);
+		for(int index = 0; index < pcnn_steps; index++)
+		{
+			Mat pcnn_image_current(size_of_result, size_of_result, src.type());
+			pcnn_result_current_step = pcnn_result[index];
+
+			for(int i=0; i < pcnn_image_current.rows; i++)
 			{
-				pcnn_at_step.at<Vec3b>(i, j)[0] = pcnn_result.at(i + j);  
-				pcnn_at_step.at<Vec3b>(i, j)[1] = pcnn_result.at(i + j);
-				pcnn_at_step.at<Vec3b>(i, j)[2] = pcnn_result.at(i + j);
+				for(int j=0; j < pcnn_image_current.cols; j++)
+				{
+					pcnn_image_current.at<Vec3b>(i, j)[0] = pcnn_result_current_step.at(i + j);  
+					pcnn_image_current.at<Vec3b>(i, j)[1] = pcnn_result_current_step.at(i + j);
+					pcnn_image_current.at<Vec3b>(i, j)[2] = pcnn_result_current_step.at(i + j);
+				}
 			}
+			pcnn_images.push_back(pcnn_image_current);
+		}
 
 		/* DEBUG */
 		// pcnn_stimulus stimulus_test { 1, 1, 0, 
@@ -247,7 +262,7 @@ int main( int argc, char** argv )
 
 		imshow("RGB image", src);
 		imshow("HSI image", hsi);
-		imshow("pcnn result", pcnn_at_step);
+		// imshow("pcnn result", pcnn_at_step);
 
 	/*	Mat display = Mat::zeros( src.rows, (2*src.cols) + (20), src.type() );
 
