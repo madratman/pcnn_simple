@@ -3,17 +3,20 @@
 #include <iostream>
 using namespace std;
 
-pcnn::pcnn(const unsigned int size, 
-		   const conn_type connection_type, 
-		   const pcnn_parameters & parameters,
-		   const unsigned int width_oscillators,
-		   const unsigned int height_oscillators) :
+pcnn::pcnn(const unsigned int size, const conn_type connection_type, const pcnn_parameters & parameters) :
 	m_oscillators(size, pcnn_oscillator()), 
-	network(size, connection_type, width_oscillators, height_oscillators){
-
-	cout<<"pcnn_simple constructor"<<endl;
+	network(size, connection_type)
+{
 	m_params = parameters;
 }
+
+pcnn::pcnn(const unsigned int size, const conn_type connection_type, const size_t height, const size_t width, const pcnn_parameters & parameters) :
+m_oscillators(size, pcnn_oscillator()),
+network(size, connection_type, height, width)
+{
+    m_params = parameters;
+}
+
 
 pcnn::~pcnn() { }
 
@@ -34,13 +37,13 @@ void pcnn::calculate_states(const pcnn_stimulus & stimulus) {
 
 	for (unsigned int index = 0; index < size(); index++) {
 		pcnn_oscillator & current_oscillator = m_oscillators[index];
-		std::vector<unsigned int> neighbors;
+		std::vector<size_t> neighbors;
 		get_neighbors(index, neighbors);
 
 		double feeding_influence = stimulus[index];
 		double linking_influence = 0.0;
 
-		for (std::vector<unsigned int>::const_iterator iter = neighbors.begin(); iter != neighbors.end(); iter++) {
+		for (std::vector<size_t>::const_iterator iter = neighbors.begin(); iter != neighbors.end(); iter++) {
 			const double output_neighbor = m_oscillators[(*iter)].output;
 
 			linking_influence += output_neighbor * m_params.W[index];

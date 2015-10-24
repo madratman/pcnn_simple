@@ -99,6 +99,22 @@ public:
 	void allocate_spike_ensembles(ensemble_data<pcnn_ensemble> & spike_ensembles) const;
 
 	void allocate_time_signal(pcnn_time_signal & time_signal) const;
+
+public:
+    /***********************************************************************************************
+    *
+    * @brief   Returns dynamic state of oscillator of the pulse-coupled neural network at the
+    *          specified iteration step.
+    *
+    * @param[in] iteration (size_t): number of iteration at which oscillator state is required.
+    * @param[in] index_oscillator (size_t): index of oscillator whose state is required.
+    *
+    * @return (double) dynamic state of the oscillator at the specified iteration.
+    *
+    ***********************************************************************************************/
+    inline double dynamic_oscillator_at(const size_t iteration, const size_t index_oscillator) const { 
+        return dynamic_at(iteration).m_output[index_oscillator]; 
+    }
 };
 
 
@@ -112,11 +128,13 @@ private:
 	pcnn(void);
 
 public:
-	pcnn(const unsigned int num_osc, 
-		   	   const conn_type connection_type, 
-		   	   const pcnn_parameters & parameters,
-		   	   const unsigned int width_osc,
-		   	   const unsigned int height_osc);
+	pcnn(const unsigned int num_osc, const conn_type connection_type, const pcnn_parameters & parameters);
+
+    pcnn(const unsigned int num_osc, 
+         const conn_type connection_type,
+         const size_t height,
+         const size_t width,
+         const pcnn_parameters & parameters);
 
 	virtual ~pcnn(void);
 
