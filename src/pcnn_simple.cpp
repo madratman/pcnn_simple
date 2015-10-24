@@ -1,11 +1,17 @@
 #include "pcnn_simple.h"	 
 #include <unordered_set>
 #include <iostream>
+using namespace std;
 
-pcnn::pcnn(const unsigned int size, const conn_type connection_type, const pcnn_parameters & parameters) :
+pcnn::pcnn(const unsigned int size, 
+		   const conn_type connection_type, 
+		   const pcnn_parameters & parameters,
+		   const unsigned int width_oscillators,
+		   const unsigned int height_oscillators) :
 	m_oscillators(size, pcnn_oscillator()), 
-	network(size, connection_type)
-{
+	network(size, connection_type, width_oscillators, height_oscillators){
+
+	cout<<"pcnn_simple constructor"<<endl;
 	m_params = parameters;
 }
 
@@ -56,11 +62,6 @@ void pcnn::calculate_states(const pcnn_stimulus & stimulus) {
 		}
 	}
 
-	/* fast linking */
-	// if (m_params.FAST_LINKING) {
-	// 	fast_linking(feeding, linking, outputs);
-	// }
-
 	/* update states of oscillators */
 	for (unsigned int index = 0; index < size(); index++) {
 		pcnn_oscillator & oscillator = m_oscillators[index];
@@ -91,7 +92,7 @@ void pcnn::store_dynamic(const unsigned int step, pcnn_dynamic & dynamic) {
 
 pcnn_dynamic::pcnn_dynamic() {}
 
-pcnn_dynamic::~pcnn_dynamic() {std::cout<<"pcnn_dynamic destructor"<<std::endl; }
+pcnn_dynamic::~pcnn_dynamic() {}
 
 /* TODO: implementation */
 pcnn_dynamic::pcnn_dynamic(const unsigned int number_oscillators, const unsigned int simulation_steps) { }
