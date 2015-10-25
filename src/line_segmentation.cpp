@@ -37,7 +37,7 @@ vector< vector<double> > pcnn_dynamic_get_output(pcnn_dynamic dynamic, int num_o
 		{
 			// pcnn_data[step][i] = current_state.m_output[i];
 			pcnn_data[step][i] = dynamic.dynamic_oscillator_at(step, i);
-			cout << "step " << step << ", osc_number "<<i <<", output " <<current_state.m_output[i]<<endl;
+			// cout << "step " << step << ", osc_number "<<i <<", output " <<current_state.m_output[i]<<endl;
 		}
 	}
 
@@ -145,7 +145,7 @@ int main( int argc, char** argv )
     
     /* Containers to define the PCNN ensemble */
     pcnn_stimulus pcnn_stimulus_intensity; // note that pcnn_stimulus is std::vector<double>. (auto-conversion)  
-    int pcnn_steps = 10; // no of pulses/iterations of PCNN.  
+    int pcnn_steps = 5; // no of pulses/iterations of PCNN.  
 
 	// for(;;)
 	// {
@@ -156,7 +156,7 @@ int main( int argc, char** argv )
 		{ 
 			std::cout<<"couldn't read image!"<<std::endl;
 		}
-		// resize(src, src, Size(640, 360), 0, 0, INTER_CUBIC);
+		resize(src, src, Size(640, 360), 0, 0, INTER_CUBIC);
 
 		// convert current frame from RGB to HSI. The "quantized" I value will be used as a stimulus to the PCNN filter. 
 		Mat hsi(src.rows, src.cols, src.type());
@@ -201,7 +201,6 @@ int main( int argc, char** argv )
 		}
 
 		vector< vector<double> > pcnn_result;
-
 		pcnn_result = pcnn_ensemble_simulate(pcnn_stimulus_intensity.size(), pcnn_steps, conn_type::GRID_EIGHT, pcnn_stimulus_intensity, src.rows, src.cols);
 
 		// populate a vector of fake grayscale openCV image to visualize what's going on.
@@ -212,42 +211,22 @@ int main( int argc, char** argv )
 		for(int index = 0; index < pcnn_steps; index++)
 		{	
 			pcnn_result_current_step = pcnn_result[index];
-			Mat pcnn_image_current(src.rows, src.cols, src.type());
-			// Mat pcnn_image_current(size_of_result, size_of_result, src.type(), &pcnn_result_current_step.front()); 
-
-			for(int i = 0; i < pcnn_image_current.rows; i++)
-			{
-				for(int j = 0; j < pcnn_image_current.cols; j++)
-				{	
-					// std::cout << "output at pulse no " << index << ", pixel (" << i << ", " << j << ") is " << pcnn_result_current_step.at(i*size_of_result + j) << std::endl;
-					pcnn_image_current.at<Vec3b>(i, j)[0] = pcnn_result_current_step.at(i*src.cols + j);  
-					pcnn_image_current.at<Vec3b>(i, j)[1] = pcnn_result_current_step.at(i*src.cols + j);
-					pcnn_image_current.at<Vec3b>(i, j)[2] = pcnn_result_current_step.at(i*src.cols + j);
-				}
-			}
-
+			unsigned char* bits = reinterpret_cast<unsigned char *>(&(pcnn_result_current_step[0]));
+			Mat pcnn_image_current(src.rows, src.cols, CV_8U, bits);
+	
 			pcnn_images.push_back(pcnn_image_current);
 		}
 
-		/* DEBUG */
-		// pcnn_stimulus stimulus_test { 1, 1, 0, 
-		//								 1, 0, 0,
-		//							 	 1, 0, 0}; 
-		// template_dynamic_generation(stimulus_test.size(), 20, conn_type::GRID_EIGHT, stimulus_test);
-		// pcnn_ensemble_simulate(stimulus_test.size(), 20, conn_type::GRID_EIGHT, stimulus_test);
-
-		for(auto iter = pcnn_images.begin(); iter!= pcnn_images.end(); iter++)
-			std::cout << iter->rows << ", " << iter->cols << std::endl;
-
-		// resize(src, src, Size(640, 360), 0, 0, INTER_CUBIC);
-		// resize(hsi, hsi, Size(640, 360), 0, 0, INTER_CUBIC);
-		// resize(pcnn_result, pcnn_result, Size(640, 360), 0, 0, INTER_CUBIC);
+		Mat pcnn_view = pcnn_images[3];
 
 		namedWindow("RGB image", CV_WINDOW_AUTOSIZE);
 		namedWindow("HSI image", CV_WINDOW_AUTOSIZE);
 		namedWindow("pcnn result", CV_WINDOW_AUTOSIZE);
-
-		Mat pcnn_view = pcnn_images[9];
+/*
+		resize(src, src, Size(640, 360), 0, 0, INTER_CUBIC);
+		resize(hsi, hsi, Size(640, 360), 0, 0, INTER_CUBIC);
+		resize(pcnn_view, pcnn_view, Size(640, 360), 0, 0, INTER_CUBIC);
+		*/
 		imshow("RGB image", src);
 		imshow("HSI image", hsi);
 		imshow("pcnn result", pcnn_view);

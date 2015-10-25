@@ -28,8 +28,8 @@ void pcnn::simulate(const unsigned int steps, const pcnn_stimulus & stimulus, pc
 	for (unsigned int current_time_step = 0; current_time_step < steps; current_time_step++) {
 		std::cout<<"currently simulating at step no "<< current_time_step << std::endl;;
 		calculate_states(stimulus, current_time_step);
-		for (unsigned int index = 0; index < size(); index++) 
-			cout << "step " << current_time_step <<"test m_osc in pcnn::simulate " << m_oscillators[index].output<<endl;
+		// for (unsigned int index = 0; index < size(); index++) 
+		// 	cout << "step " << current_time_step <<", test m_osc in pcnn::simulate " << m_oscillators[index].output<<endl;
 		store_dynamic(current_time_step, output_dynamic);
 	}
 }
@@ -126,7 +126,7 @@ void pcnn::calculate_states(const pcnn_stimulus & stimulus, const unsigned int c
 		else {
 			outputs[index] = OUTPUT_INACTIVE_STATE;
 		}
-		cout << "internal_activity " << internal_activity << ", current_oscillator.threshold "<<current_oscillator.threshold<< ", output "<< outputs[index]<<endl;
+		// cout << "internal_activity " << internal_activity << ", current_oscillator.threshold "<<current_oscillator.threshold<< ", output "<< outputs[index]<<endl;
 	}
 
 	/* find minimum internal energy so as to set the threshold for next time step */
@@ -135,29 +135,18 @@ void pcnn::calculate_states(const pcnn_stimulus & stimulus, const unsigned int c
 
 	/* update states of oscillators */
 	for (unsigned int index = 0; index < size(); index++) {
-/*		pcnn_oscillator & oscillator = m_oscillators[index];
+		pcnn_oscillator & oscillator = m_oscillators[index];
 
 		oscillator.feeding = feeding[index];
 		oscillator.linking = linking[index];
 		oscillator.output = outputs[index];
-		if(oscillator.output = OUTPUT_INACTIVE_STATE){
+		// cout << "test outputs in calculate_states " << outputs[index]<<endl;
+		// cout << "test m_osc in calculate_states " << oscillator.output<<endl;
+		if(oscillator.output == OUTPUT_INACTIVE_STATE){
 			oscillator.threshold -= m_params.step_value; // decrease threshold by step value
 		}
 		else{
 			oscillator.threshold *= m_params.AT; // penalize if it has pulsed
-		}
-	}*/
-	// pcnn_oscillator & oscillator = m_oscillators[index];
-
-		m_oscillators[index].feeding = feeding[index];
-		m_oscillators[index].linking = linking[index];
-		m_oscillators[index].output = outputs[index];
-		cout << "test m_osc in calculate_states " << m_oscillators[index].output<<endl;
-		if(m_oscillators[index].output = OUTPUT_INACTIVE_STATE){
-			m_oscillators[index].threshold -= m_params.step_value; // decrease threshold by step value
-		}
-		else{
-			m_oscillators[index].threshold *= m_params.AT; // penalize if it has pulsed
 		}
 	}
 	// std::cout<<"calculate_states ";
@@ -169,7 +158,7 @@ void pcnn::store_dynamic(const unsigned int step, pcnn_dynamic & dynamic) {
 
 	current_state.m_time = step;
 	for (size_t i = 0; i < m_oscillators.size(); i++) {
-		cout <<  "inside store_dynamic, output "<< m_oscillators[i].output<<endl;
+		// cout <<  "inside store_dynamic, output "<< m_oscillators[i].output<<endl;
 		current_state.m_output[i] = m_oscillators[i].output;
 	}
 	// std::cout<<"store_dynamic"<<std::endl;

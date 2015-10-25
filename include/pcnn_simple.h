@@ -29,7 +29,7 @@ typedef struct pcnn_parameters {
     double VL = 1.0;
     
     // Multiplier for the threshold at the current step.    
-    double VT = 10.0;
+    double VT = 1.0;
     
     // Multiplier for the feeding compartment at the previous step.    
     double AF = 0.1;
@@ -38,18 +38,18 @@ typedef struct pcnn_parameters {
     double AL = 0.1;
     
     // Multiplier for the threshold at the previous step.
-    double AT = 0.8;
+    double AT = 10;
     
     // Synaptic weight - neighbours influence on linking compartment
     std::vector<double> W = {sqrt(1/2), 1.0, sqrt(1/2),
 							 1.0, 1.0, 1.0, 
 						     sqrt(1/2), 1.0, sqrt(1/2)};
-    
+
     // Synaptic weight - neighbours influence on feeding compartment.
     double M = 1.0;
     
     // Linking strength in the network.
-    double B = 0.2;
+    double B = 2;
 
     // step_value to be subtracted from oscillator
     double step_value = 10; 

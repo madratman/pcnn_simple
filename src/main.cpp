@@ -23,7 +23,7 @@ vector< vector<double> > pcnn_dynamic_get_output(pcnn_dynamic dynamic, int num_o
 		{
 			// pcnn_data[step][i] = current_state.m_output[i];
 			pcnn_data[step][i] = dynamic.dynamic_oscillator_at(step, i);
-			// cout << "pcnn_dynamic_get_output(), " << "step " << step << ", osc_number "<<i <<", output " <<current_state.m_output[i]<<endl;
+			cout << "pcnn_dynamic_get_output(), " << "step " << step << ", osc_number "<<i <<", output " <<current_state.m_output[i]<<endl;
 		}
 	}
 
@@ -166,7 +166,7 @@ static void template_ensemble_allocation(
 
 int main()
 {
-	pcnn_stimulus stimulus { 1,1, 0,0}; 
+	pcnn_stimulus stimulus { 10,1, 10,0}; 
 	pcnn_ensemble_simulate(stimulus.size(), 10, conn_type::GRID_EIGHT, stimulus);
 	// template_dynamic_generation(stimulus.size(), 20, conn_type::GRID_EIGHT, stimulus);
 	// template_output_activity(stimulus.size(), 30, conn_type::GRID_EIGHT, stimulus, true);
