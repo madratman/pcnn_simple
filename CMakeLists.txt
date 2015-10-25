@@ -11,7 +11,7 @@ add_library(network src/network.cpp)
 # add_library(pcnn src/pcnn.cpp)
 add_library(pcnn_simple src/pcnn_simple.cpp)
 
-add_executable(main src/main.cpp)
+# add_executable(main src/main.cpp)
 add_executable(line_segmentation src/line_segmentation.cpp)
 
 # target_link_libraries(pcnn network)
@@ -19,5 +19,5 @@ add_executable(line_segmentation src/line_segmentation.cpp)
 # target_link_libraries(line_segmentation pcnn network ${OpenCV_LIBS})
 
 target_link_libraries(pcnn_simple network)
-target_link_libraries(main pcnn_simple network)
+# target_link_libraries(main pcnn_simple network)
 target_link_libraries(line_segmentation pcnn_simple network ${OpenCV_LIBS})

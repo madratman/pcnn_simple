@@ -38,7 +38,7 @@ typedef struct pcnn_parameters {
     double AL = 0.1;
     
     // Multiplier for the threshold at the previous step.
-    double AT = 0.5;
+    double AT = 0.8;
     
     // Synaptic weight - neighbours influence on linking compartment
     std::vector<double> W = {sqrt(1/2), 1.0, sqrt(1/2),
@@ -52,7 +52,7 @@ typedef struct pcnn_parameters {
     double B = 0.2;
 
     // step_value to be subtracted from oscillator
-    double step_value = 0.01; 
+    double step_value = 10; 
     
     // Enable/disable Fast-Linking mode. Fast linking helps to overcome some of the effects of time quantisation. This process allows the linking wave to progress a lot faster than the feeding wave.
     bool FAST_LINKING = false;
@@ -143,7 +143,7 @@ public:
 
 
 private:
-	void calculate_states(const pcnn_stimulus & stimulus);
+	void calculate_states(const pcnn_stimulus & stimulus, const unsigned int current_step);
 
 	void store_dynamic(const unsigned int step, pcnn_dynamic & dynamic);
 

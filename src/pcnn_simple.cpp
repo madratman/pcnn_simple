@@ -1,6 +1,8 @@
 #include "pcnn_simple.h"	 
 #include <unordered_set>
 #include <iostream>
+#include <algorithm>
+
 using namespace std;
 
 pcnn::pcnn(const unsigned int size, const conn_type connection_type, const pcnn_parameters & parameters) :
@@ -23,17 +25,22 @@ pcnn::~pcnn() { }
 void pcnn::simulate(const unsigned int steps, const pcnn_stimulus & stimulus, pcnn_dynamic & output_dynamic) {
 	output_dynamic.resize(steps, size());
 
-	for (unsigned int i = 0; i < steps; i++) {
-		std::cout<<"currently simulating at step no "<< i << std::endl;;
-		calculate_states(stimulus);
-		store_dynamic(i, output_dynamic);
+	for (unsigned int current_time_step = 0; current_time_step < steps; current_time_step++) {
+		std::cout<<"currently simulating at step no "<< current_time_step << std::endl;;
+		calculate_states(stimulus, current_time_step);
+		store_dynamic(current_time_step, output_dynamic);
 	}
 }
 
-void pcnn::calculate_states(const pcnn_stimulus & stimulus) {
+void pcnn::calculate_states(const pcnn_stimulus & stimulus, const unsigned int current_step) {
+	// TODO initial_threshold should be a pcnn_parameter
+
 	std::vector<double> feeding(size(), 0.0);
 	std::vector<double> linking(size(), 0.0);
 	std::vector<double> outputs(size(), 0.0);
+	auto stimulus_max_ptr = std::max_element(stimulus.begin(), stimulus.end());
+	double initial_threshold = *stimulus_max_ptr + 0.01;
+	std::vector<double> internal_activity_vector;
 
 	for (unsigned int index = 0; index < size(); index++) {
 		pcnn_oscillator & current_oscillator = m_oscillators[index];
@@ -63,6 +70,8 @@ void pcnn::calculate_states(const pcnn_stimulus & stimulus) {
 			const int node_row_index = std::floor(index / m_width);
         	const int upper_row_index = node_row_index - 1;
        		const int lower_row_index = node_row_index + 1;
+       		// cout<< "index " << index << ", neighbor "<<  current  << ", stimulus " << stimulus[index] <<endl;
+       		// cout<< " linking_influence "<< linking_influence <<endl;
 
      	    if ((current == upper_left_index) && (upper_left_index >= 0) && (std::floor(upper_left_index / m_width) == upper_row_index))
 					linking_influence += output_neighbor * m_params.W[0];				
@@ -101,6 +110,12 @@ void pcnn::calculate_states(const pcnn_stimulus & stimulus) {
 
 		/* calculate internal activity */
 		double internal_activity = feeding[index] + (m_params.B * linking[index]);
+		internal_activity_vector.push_back(internal_activity);
+
+		if(current_step == 0)
+		{
+			current_oscillator.threshold = initial_threshold;
+		}
 
 		/* calculate output of the oscillator */
 		if (internal_activity > current_oscillator.threshold) {
@@ -109,7 +124,12 @@ void pcnn::calculate_states(const pcnn_stimulus & stimulus) {
 		else {
 			outputs[index] = OUTPUT_INACTIVE_STATE;
 		}
+		cout << "internal_activity " << internal_activity << ", current_oscillator.threshold "<<current_oscillator.threshold<< ", output "<< outputs[index]<<endl;
 	}
+
+	/* find minimum internal energy so as to set the threshold for next time step */
+	auto internal_activity_min_ptr = std::min(internal_activity_vector.begin(), internal_activity_vector.end());
+	double internal_activity_min = *internal_activity_min_ptr;
 
 	/* update states of oscillators */
 	for (unsigned int index = 0; index < size(); index++) {
@@ -134,6 +154,7 @@ void pcnn::store_dynamic(const unsigned int step, pcnn_dynamic & dynamic) {
 
 	current_state.m_time = step;
 	for (size_t i = 0; i < m_oscillators.size(); i++) {
+		cout << "inside store_dynamic, output "<< m_oscillators[i].output<<endl;
 		current_state.m_output[i] = m_oscillators[i].output;
 	}
 	// std::cout<<"store_dynamic"<<std::endl;

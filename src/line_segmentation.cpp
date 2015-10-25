@@ -1,4 +1,4 @@
-#include "pcnn.h"
+#include "pcnn_simple.h"
 #include "network.h"
 #include <unordered_set>
 
@@ -35,7 +35,9 @@ vector< vector<double> > pcnn_dynamic_get_output(pcnn_dynamic dynamic, int num_o
 
 		for (int i = 0; i < num_osc; i++) 
 		{
-			pcnn_data[step][i] = current_state.m_output[i];
+			// pcnn_data[step][i] = current_state.m_output[i];
+			pcnn_data[step][i] = dynamic.dynamic_oscillator_at(step, i);
+			cout << "step " << step << ", osc_number "<<i <<", output " <<current_state.m_output[i]<<endl;
 		}
 	}
 
@@ -56,6 +58,8 @@ vector< vector<double> >  pcnn_ensemble_simulate(
 		const unsigned int steps, 
 		const conn_type type_conn, 
 		const pcnn_stimulus & stimulus, 
+		const size_t height, 
+		const size_t width,
 		const pcnn_parameters * const params = nullptr) 
 {
 	// use default params if not specified
@@ -67,7 +71,7 @@ vector< vector<double> >  pcnn_ensemble_simulate(
 	// class pcnn has a vector of pcnn_oscillators, which are structs which have feeding, linking, output, threshold as members
 	// class pcnn also has a member pcnn_params
 
-	pcnn network(num_osc, type_conn, parameters);
+	pcnn network(num_osc, type_conn, height, width, parameters);
 
 	// pcnn_dynamic is a class that represents the dynamic output of pcnn. 
 	// It's inherited from templated dynamic_data and uses "pcnn_network_state" (in place of the template)
@@ -150,7 +154,7 @@ int main( int argc, char** argv )
 		src = imread(argv[1], CV_LOAD_IMAGE_COLOR); 
 		if(src.empty())
 		{ 
-			std::cout<<"wtf!";
+			std::cout<<"couldn't read image!"<<std::endl;
 		}
 		// resize(src, src, Size(640, 360), 0, 0, INTER_CUBIC);
 
@@ -197,13 +201,8 @@ int main( int argc, char** argv )
 		}
 
 		vector< vector<double> > pcnn_result;
-		int size_of_result = 148; // crop image to square so as to comply with pcnn connection type GRID_EIGHT
-		// TODO try to remove this constraint of square images
-		
-		pcnn_stimulus_intensity.resize(size_of_result*size_of_result); 
-		// pcnn_result.resize( pcnn_stimulus_intensity.size() * pcnn_steps );
 
-		pcnn_result = pcnn_ensemble_simulate(pcnn_stimulus_intensity.size(), pcnn_steps, conn_type::GRID_EIGHT, pcnn_stimulus_intensity);
+		pcnn_result = pcnn_ensemble_simulate(pcnn_stimulus_intensity.size(), pcnn_steps, conn_type::GRID_EIGHT, pcnn_stimulus_intensity, src.rows, src.cols);
 
 		// populate a vector of fake grayscale openCV image to visualize what's going on.
 		// Following block could be optimized. But in the end, we ll need to visualize at a specified time step only, so it doesn't matter
@@ -213,17 +212,17 @@ int main( int argc, char** argv )
 		for(int index = 0; index < pcnn_steps; index++)
 		{	
 			pcnn_result_current_step = pcnn_result[index];
-			Mat pcnn_image_current(size_of_result, size_of_result, src.type());
+			Mat pcnn_image_current(src.rows, src.cols, src.type());
 			// Mat pcnn_image_current(size_of_result, size_of_result, src.type(), &pcnn_result_current_step.front()); 
 
 			for(int i = 0; i < pcnn_image_current.rows; i++)
 			{
 				for(int j = 0; j < pcnn_image_current.cols; j++)
 				{	
-					std::cout << "output at pulse no " << index << ", pixel (" << i << ", " << j << ") is " << pcnn_result_current_step.at(i*size_of_result + j) << std::endl;
-					pcnn_image_current.at<Vec3b>(i, j)[0] = pcnn_result_current_step.at(i*size_of_result + j);  
-					pcnn_image_current.at<Vec3b>(i, j)[1] = pcnn_result_current_step.at(i*size_of_result + j);
-					pcnn_image_current.at<Vec3b>(i, j)[2] = pcnn_result_current_step.at(i*size_of_result + j);
+					// std::cout << "output at pulse no " << index << ", pixel (" << i << ", " << j << ") is " << pcnn_result_current_step.at(i*size_of_result + j) << std::endl;
+					pcnn_image_current.at<Vec3b>(i, j)[0] = pcnn_result_current_step.at(i*src.cols + j);  
+					pcnn_image_current.at<Vec3b>(i, j)[1] = pcnn_result_current_step.at(i*src.cols + j);
+					pcnn_image_current.at<Vec3b>(i, j)[2] = pcnn_result_current_step.at(i*src.cols + j);
 				}
 			}
 
@@ -237,8 +236,8 @@ int main( int argc, char** argv )
 		// template_dynamic_generation(stimulus_test.size(), 20, conn_type::GRID_EIGHT, stimulus_test);
 		// pcnn_ensemble_simulate(stimulus_test.size(), 20, conn_type::GRID_EIGHT, stimulus_test);
 
-		// for(auto i = pcnn_result.begin(); i!= pcnn_result.end(); i++)
-		// 	std::cout << * i << std::endl;
+		for(auto iter = pcnn_images.begin(); iter!= pcnn_images.end(); iter++)
+			std::cout << iter->rows << ", " << iter->cols << std::endl;
 
 		// resize(src, src, Size(640, 360), 0, 0, INTER_CUBIC);
 		// resize(hsi, hsi, Size(640, 360), 0, 0, INTER_CUBIC);
@@ -270,6 +269,6 @@ int main( int argc, char** argv )
 		// waitKey(1);
 	// }
 
-	// waitKey(0);
+	waitKey(0);
 	return 0;
 }
