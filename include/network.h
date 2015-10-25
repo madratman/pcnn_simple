@@ -37,7 +37,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 typedef enum initial_type {
 	RANDOM_GAUSSIAN,
-	EQUIPARTITION,
+	EQUIPARTITION, 
 	TOTAL_NUMBER_INITIAL_TYPES
 } initial_type;
 
@@ -71,14 +71,22 @@ typedef enum conn_repr_type {
 
 
 class network {
+protected:
+    size_t              m_height;
+    size_t              m_width;
 private:
 	size_t			    m_num_osc;
 	conn_repr_type		m_conn_representation;
 	conn_type			m_conn_type;
 
-    size_t              m_height;
-    size_t              m_width;
+    /* A 2D array. The first dimension is m_num_osc. 2nd varies as it contains an array of the linear index
+    of the oscillator the first index is connected to. */
 
+    /* if 0 is connected to 1 and 2
+          1 is connected to 0, 2 and 3, etc. 
+          0  1,2
+          1  0,1,2
+          2  1                     */
 	std::vector<std::vector<size_t> >		m_osc_conn;
 
 public:

@@ -44,9 +44,55 @@ void pcnn::calculate_states(const pcnn_stimulus & stimulus) {
 		double linking_influence = 0.0;
 
 		for (std::vector<size_t>::const_iterator iter = neighbors.begin(); iter != neighbors.end(); iter++) {
+			// output_neighbour is the value of output of the current neighbouring oscillator
 			const double output_neighbor = m_oscillators[(*iter)].output;
+			// std::cout<< index << ", " << *iter << endl; 
 
-			linking_influence += output_neighbor * m_params.W[index];
+			int current = (*iter);
+			const int upper_index = index - m_width;
+	        const int upper_left_index = upper_index - 1;
+       		const int upper_right_index = upper_index + 1;
+
+			const int lower_index = index + m_width;
+			const int lower_left_index = lower_index - 1;
+			const int lower_right_index = lower_index + 1;
+ 
+			const int left_index = index - 1;
+			const int right_index = index + 1;
+
+			const int node_row_index = std::floor(index / m_width);
+        	const int upper_row_index = node_row_index - 1;
+       		const int lower_row_index = node_row_index + 1;
+
+     	    if ((current == upper_left_index) && (upper_left_index >= 0) && (std::floor(upper_left_index / m_width) == upper_row_index))
+					linking_influence += output_neighbor * m_params.W[0];				
+			
+			if ((current == upper_index) && upper_index >= 0)
+					linking_influence += output_neighbor * m_params.W[1];
+       		
+       		if ((current == upper_right_index) && (upper_right_index >= 0) && (std::floor(upper_right_index / m_width) == upper_row_index))
+					linking_influence += output_neighbor * m_params.W[2];
+
+
+	        if ((current == left_index) && (left_index >= 0) && (std::floor(left_index / m_width) == node_row_index))
+					linking_influence += output_neighbor * m_params.W[3];
+ 			
+ 			if (index == current)
+					linking_influence += output_neighbor * m_params.W[4];
+	        
+	        if ((current == right_index) && (right_index < size()) && (std::floor(right_index / m_width) == node_row_index))
+					linking_influence += output_neighbor * m_params.W[5];
+
+     	  
+     	    if ((current == lower_left_index) && (lower_right_index < size()) && (std::floor(lower_left_index / m_width) == upper_row_index))
+					linking_influence += output_neighbor * m_params.W[6];				
+			
+			if ((current == lower_index) && (lower_index < size()))
+					linking_influence += output_neighbor * m_params.W[7];
+       		
+       		if ((current == lower_right_index) && (lower_right_index < size()) && (std::floor(lower_right_index / m_width) == upper_row_index))
+					linking_influence += output_neighbor * m_params.W[8];
+			
 		}
 
 		// heavily simplified!

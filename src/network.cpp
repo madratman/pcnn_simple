@@ -32,8 +32,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #define STR(expression) (std::to_string(expression))
 
-using namespace std;
-
 network::network(const size_t number_oscillators, const conn_type connection_type) {
 	m_num_osc = number_oscillators;
 	m_conn_type = connection_type;
@@ -64,8 +62,6 @@ network::network(const size_t number_oscillators,
                  const size_t height,
                  const size_t width) {
 
-	cout << " network::network (base class constructor" << endl;
-
     m_num_osc = number_oscillators;
     m_conn_type = connection_type;
     m_height = height;
@@ -86,7 +82,6 @@ network::~network() { }
 void network::get_neighbors(const size_t index, std::vector<size_t> & result) const {
 	result.clear();
 
-	cout<<"network::get_neighbors" <<endl;
 	switch (m_conn_type) {
 		case conn_type::ALL_TO_ALL: {
 			for (size_t index_neighbour = 0; index_neighbour < m_num_osc; index_neighbour++) {
@@ -121,7 +116,6 @@ void network::get_neighbors(const size_t index, std::vector<size_t> & result) co
 }
 
 size_t network::get_connection(const size_t index1, const size_t index2) const {
-	cout << "network::get_connection"<<endl; 
 	if (m_conn_type == conn_type::ALL_TO_ALL) {
 		if (index1 == index2) {
             return (size_t) 0;
@@ -161,7 +155,6 @@ size_t network::get_connection(const size_t index1, const size_t index2) const {
 }
 
 void network::set_connection(const size_t index1, const size_t index2) {
-	cout<<"network::set_connection"<<endl;
 	switch(m_conn_representation) {
 		case MATRIX_CONN_REPRESENTATION: {
 			m_osc_conn[index1][index2] = 1;
@@ -184,6 +177,28 @@ void network::set_connection(const size_t index1, const size_t index2) {
 	}
 }
 
+void network::create_structure() {
+    /* find representation for connections and prepare storage for them */
+    create_structure_representation();
+
+	switch(m_conn_type) {
+		case conn_type::NONE:
+		case conn_type::DYNAMIC:
+		case conn_type::ALL_TO_ALL:
+			break;
+		case conn_type::GRID_FOUR:
+			create_grid_four_connections();
+			break;
+		case conn_type::GRID_EIGHT:
+			create_grid_eight_connections();
+			break;
+		case conn_type::LIST_BIDIR:
+			create_list_bidir_connections();
+			break;
+		default:
+			throw std::runtime_error("Unknown type of connection");
+	}
+}
 
 void network::create_structure_representation(void) {
     if ((m_conn_type != conn_type::ALL_TO_ALL) && (m_conn_type != conn_type::NONE)) {
