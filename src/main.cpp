@@ -2,20 +2,72 @@
 // It's extract from the GTests of the ccore of pyclustering. (hence the static keyword)
 // here: https://github.com/annoviko/pyclustering/blob/da8cdc231f615879bd6eb8c2b78a5f5cac2cd913/ccore/utcore/utest-pcnn.h
 
-#include "pcnn.h"
+#include "pcnn_simple.h"
 #include "network.h"
 #include <unordered_set>
+#include <iostream>
 
-std::vector<double> pcnn_dynamic_get_output(pcnn_dynamic dynamic, int num_osc) {
-	int step = 100;
-	pcnn_network_state & current_state = dynamic[step];
-	std::vector<double> current_state_result;
-	std::cout<<"AAAAAAAAAAAAAAAAAAAAAAAAAAAAA"<<std::endl;
-	for (int i = 0; i < num_osc; i++) {
-		current_state_result.push_back(current_state.m_output[i]);
+using namespace std;
+
+vector< vector<double> > pcnn_dynamic_get_output(pcnn_dynamic dynamic, int num_osc) 
+{
+	vector< vector<double> > pcnn_data;
+	pcnn_data.resize( dynamic.size() );
+
+	for (int step = 0; step < dynamic.size(); step++)
+	{
+		pcnn_data[step].resize(num_osc);
+		pcnn_network_state & current_state = dynamic[step];
+
+		for (int i = 0; i < num_osc; i++) 
+		{
+			// pcnn_data[step][i] = current_state.m_output[i];
+			pcnn_data[step][i] = dynamic.dynamic_oscillator_at(step, i);
+			// cout << "pcnn_dynamic_get_output(), " << "step " << step << ", osc_number "<<i <<", output " <<current_state.m_output[i]<<endl;
+		}
 	}
-	return current_state_result;
+
+	return pcnn_data;
 }
+
+// generates, simulates PCNN. Returns a vector of outputs at a hardcoded timestep 
+vector< vector<double> >  pcnn_ensemble_simulate(
+		const unsigned int num_osc, 
+		const unsigned int steps, 
+		const conn_type type_conn, 
+		const pcnn_stimulus & stimulus, 
+		const pcnn_parameters * const params = nullptr) 
+{
+	// use default params if not specified
+	pcnn_parameters parameters;
+	if (params != nullptr) {
+		parameters = *params;
+	}
+
+	// class pcnn has a vector of pcnn_oscillators, which are structs which have feeding, linking, output, threshold as members
+	// class pcnn also has a member pcnn_params
+
+	pcnn network(num_osc, type_conn, parameters);
+
+	// pcnn_dynamic is a class that represents the dynamic output of pcnn. 
+	// It's inherited from templated dynamic_data and uses "pcnn_network_state" (in place of the template)
+	// dynamic_data::output_dynamics member stores a std::vector of pcnn_network_state 
+	// pcnn_network_state is a struct with members std::vector<double> m_output and double m_time.
+
+	pcnn_dynamic dynamic;
+
+	// Performs static simulation of oscillatory network based on Hodgkin-Huxley neuron model.
+	network.simulate(steps, stimulus, dynamic);
+
+	// TODO : return a vector of vectors for all time steps
+	vector< vector<double> >  pcnn_state; 
+
+	// pcnn_state.resize( num_osc * dynamic.size() );
+	pcnn_state = pcnn_dynamic_get_output(dynamic, num_osc);
+
+	return pcnn_state;
+}
+
 
 static void template_dynamic_generation(
 		const unsigned int num_osc, 
@@ -114,17 +166,18 @@ static void template_ensemble_allocation(
 
 int main()
 {
-	pcnn_stimulus stimulus { 0, 0, 0, 0, 0, 0, 0, 0, 0}; 
-	template_dynamic_generation(stimulus.size(), 20, conn_type::GRID_EIGHT, stimulus);
-	template_output_activity(stimulus.size(), 30, conn_type::GRID_EIGHT, stimulus, true);
+	pcnn_stimulus stimulus { 1,1, 0,0}; 
+	pcnn_ensemble_simulate(stimulus.size(), 10, conn_type::GRID_EIGHT, stimulus);
+	// template_dynamic_generation(stimulus.size(), 20, conn_type::GRID_EIGHT, stimulus);
+	// template_output_activity(stimulus.size(), 30, conn_type::GRID_EIGHT, stimulus, true);
 
-	pcnn_stimulus full_stimulus { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 }; 
-	pcnn_stimulus partial_stimulus { 1, 0, 0, 1, 1, 1, 0, 0, 1, 1 };
-	pcnn_stimulus no_stimulus { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+	// pcnn_stimulus full_stimulus { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 }; 
+	// pcnn_stimulus partial_stimulus { 1, 0, 0, 1, 1, 1, 0, 0, 1, 1 };
+	// pcnn_stimulus no_stimulus { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 
-	pcnn_parameters params;
-	params.FAST_LINKING = true;
+	// pcnn_parameters params;
+	// params.FAST_LINKING = true;
 
-	template_ensemble_allocation(stimulus.size(), 20, conn_type::ALL_TO_ALL, stimulus);
-	template_ensemble_allocation(full_stimulus.size(), 50, conn_type::ALL_TO_ALL, full_stimulus, &params);
+	// template_ensemble_allocation(stimulus.size(), 20, conn_type::ALL_TO_ALL, stimulus);
+	// template_ensemble_allocation(full_stimulus.size(), 50, conn_type::ALL_TO_ALL, full_stimulus, &params);
 }
