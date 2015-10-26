@@ -21,10 +21,10 @@ make
  - Parameters:
 You can adjust the following parameters in pcnn_simple.h
 ```
-  - No of time steps = `PCNN_NO_OF_STEPS`
-  In side struct `pcnn_parameters`:
-   - // Multiplier for the threshold at the current step.    
-     double VT = 1.2;
+  - No of time steps = `PCNN_NO_OF_STEPS`   
+   
+    // Multiplier for the threshold at the current step.    
+    double VT;
     
     // Synaptic weight - neighbours influence on linking compartment
     std::vector<double> W = {sqrt(1/2), 1.0, sqrt(1/2),
@@ -32,18 +32,19 @@ You can adjust the following parameters in pcnn_simple.h
 						     sqrt(1/2), 1.0, sqrt(1/2)};
 
     // Linking strength in the network.
-    double B = 0.2;
+    double B; (0.2 from paper)
 
     // step_value by which each oscillator's threshold is decreased if it 
-    double step_value = 10; 
+    double step_value; 
 ```    
 For videos, you can uncomment the for loop in `line_segmentation.cpp`, but right now it is pretty slow.  
 
-*(Adding the following stuff for easier colloboration and tracking)*
+*(Adding the following stuff for easier collaboration and tracking)*
 ### Higher level Roadmap of things to be done (as of 25/10/15)
   * Tune pcnn. 
   * Choose at which time step to perform post processing
-  * Elimination of noisy pixels(details in paper)
+  * Locating noisy pixels and applying a median *only* to the noisy pixels, as explained in this reference in the above paper [An Adaptive Method for Image Filtering with
+Pulse-coupled Neural Networks ](http://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=1530009&tag=1)
   * Edge detection (see algorithm 2 in paper)
   * K-means clustering followed by the "smart" Hough transform (the voting procedure) to detect power lines. Read paper for details.
     The voting procedure is better in one of the references : [Real-time line detection through an improved Hough transform voting scheme](http://www.sciencedirect.com/science/article/pii/S0031320307001823)
@@ -54,9 +55,9 @@ For videos, you can uncomment the for loop in `line_segmentation.cpp`, but right
     - Late night 19/10/15 : Found pyclustering. Took out required files ccore and building on top of it.
     - Throughout the week : Getting familiar, adding support 2D weight matrices and rectangular images, methods to read output, executable for image/video line detection, [minor contribution](https://github.com/annoviko/pyclustering/pull/260) to pyclustering, mailing the author of pyclustering - who turned out to be pretty helpful and is already addressing [issue #259](https://github.com/annoviko/pyclustering/issues/259), and of course adding and later removing my own bugs and getting confused here and there. 
     - 25/10 : First part of paper is mostly done. PCNN needs tuning. 
-    - **Results can be seen in `results/preliminary_Oct_25' directory. In the screenshots, "pcnn_result_n.png" is the image at time step n of the network. The "HSI image.png" has a misleading name. It's just a monochrome visualization of quantized intensities(in 64 lines, as written in paper) of the original image. The parameters can be seen from the commit from that day. 
+    - *Results* can be seen in `results/preliminary_Oct_25' directory. In the screenshots, "pcnn_result_n.png" is the image at time step n of the network. The "HSI image.png" has a misleading name. It's just a monochrome visualization of quantized intensities(in 64 lines, as written in paper) of the original image. The parameters can be seen from the commit from that day. 
 
-#### More ideas for power line detection / segmentation. 
+### More ideas for power line detection / segmentation. 
   - *Stacked PCNN, in a ConvNet style architecture*. This is a general idea for segmentation. Dunno about power lines.   
  Here the convolution part is replaced by the PCNN equations. The output of the pixel is fed on to the next layer and so on.    
  You could, in theory, tweak which temporal (or "serial") pulse should be passed on to the next network. Or you could just pass on everything as parallel channels.     
@@ -70,12 +71,11 @@ Daniel's ideas(quoting):
 Use [Sloth](https://github.com/cvhciKIT/sloth) for labeling  
 Also similar to [Real-Time Grasp Detection Using Convolutional Neural Networks](http://pjreddie.com/media/files/papers/grasp_detection_1.pdf)
 
-  - Stacking and autocontext
+ - Stacking and autocontext
   http://pages.ucsd.edu/~ztu/publication/cvpr08_autocontext.pdf
   https://www.ri.cmu.edu/pub_files/2010/9/munoz_eccv_10.pdf
 
 #### Resources for CNN
   - [ CS231n: Convolutional Neural Networks for Visual Recognition. ](http://cs231n.github.io/)
   - [Deep Learning for Perception](https://computing.ece.vt.edu/~f15ece6504/).   
-  [Homework repos] (https://github.com/batra-mlp-lab/)
-
+  [Homework repos](https://github.com/batra-mlp-lab/)
