@@ -145,7 +145,8 @@ int main( int argc, char** argv )
     
     /* Containers to define the PCNN ensemble */
     pcnn_stimulus pcnn_stimulus_intensity; // note that pcnn_stimulus is std::vector<double>. (auto-conversion)  
-    int pcnn_steps = 5; // no of pulses/iterations of PCNN.  
+    int pcnn_steps = PCNN_NO_OF_STEPS; // no of pulses/iterations of PCNN.  
+
 
 	// for(;;)
 	// {
@@ -157,12 +158,12 @@ int main( int argc, char** argv )
 			std::cout<<"couldn't read image!"<<std::endl;
 		}
 		resize(src, src, Size(640, 360), 0, 0, INTER_CUBIC);
-
-		// convert current frame from RGB to HSI. The "quantized" I value will be used as a stimulus to the PCNN filter. 
+		// resize(src, src, Size(640, 360), 0, 0, INTER_CUBIC);
 		Mat hsi(src.rows, src.cols, src.type());
 
+		// convert current frame from RGB to HSI. The "quantized" I value will be used as a stimulus to the PCNN filter. 
 		std::cout << src.rows << " "<< src.cols<<endl;
-		int test;
+
 		for(int i = 0; i < src.rows; i++)
 		{
 			for(int j = 0; j < src.cols; j++)
@@ -172,31 +173,17 @@ int main( int argc, char** argv )
 				red = src.at<Vec3b>(i, j)[2];
 
 				intensity = (blue + green + red) / 3; // [0, 255]
-				intensity_quantized = floor(intensity/4); // quantized intensity, in 64 levels. [0:1;63]
-				intensity_quantized_visualize = 4*intensity_quantized; // throttle up to [0:4:255] to visualize what's going on 
-				
+				intensity_quantized = floor(intensity/25); // quantized intensity, in 64 levels. [0:1;63]
+				intensity_quantized_visualize = 25*intensity_quantized; // throttle up to [0:4:255] to visualize what's going on 
+		
 				// the intensity_quantized is the input to our PCNN. 
-				// std::cout<< i << "   " << j << "    " << intensity_quantized<<endl;
-				pcnn_stimulus_intensity.push_back(intensity_quantized);
+				// std::cout<< i << "   " << j << "    " << intensity<<endl;
+				pcnn_stimulus_intensity.push_back(intensity);
 
-				int minimum_rgb = 0;
-				minimum_rgb = std::min(red, std::min(green, blue));
-
-				saturation = 1 - (minimum_rgb/intensity);
-
-				num = (red - green) + (red - blue);
-				den = sqrt( (red - green)*(red - green) + (red - blue)*(green - blue) );
-				hue = safe_division(num, den);
-				hue = acos(0.5 * hue) * 180/M_PI;
-
-				if(blue > green)
-				{
-					hue	 = 360 - hue;
-				}
-
-				hsi.at<Vec3b>(i, j)[0] = hue; 			 // [0,360]  
-				hsi.at<Vec3b>(i, j)[1] = saturation*100; // [0,100]
+				hsi.at<Vec3b>(i, j)[0] = intensity_quantized_visualize; // [0:1:63]
+				hsi.at<Vec3b>(i, j)[1] = intensity_quantized_visualize; // [0:1:63]
 				hsi.at<Vec3b>(i, j)[2] = intensity_quantized_visualize; // [0:1:63]
+
 			}
 		}
 
@@ -207,21 +194,28 @@ int main( int argc, char** argv )
 		// Following block could be optimized. But in the end, we ll need to visualize at a specified time step only, so it doesn't matter
 		vector<Mat> pcnn_images;
 		vector<double> pcnn_result_current_step;
-		
+
+		cout<<src.rows <<"  " <<src.cols<<endl;
 		for(int index = 0; index < pcnn_steps; index++)
 		{	
 			pcnn_result_current_step = pcnn_result[index];
-			unsigned char* bits = reinterpret_cast<unsigned char *>(&(pcnn_result_current_step[0]));
-			Mat pcnn_image_current(src.rows, src.cols, CV_8U, bits);
-	
+			Mat pcnn_image_current (src.rows, src.cols, src.type());
+			for(int i = 0; i < src.rows; i++)
+			{
+				for(int j = 0; j < src.cols; j++)
+				{
+					pcnn_image_current.at<Vec3b>(i,j)[0] = 255 * (pcnn_result_current_step[i*src.cols +j]);
+					pcnn_image_current.at<Vec3b>(i,j)[1] = 255 * (pcnn_result_current_step[i*src.cols +j]);
+					pcnn_image_current.at<Vec3b>(i,j)[2] = 255 * (pcnn_result_current_step[i*src.cols +j]);
+				}
+			}
+
+			// cout << index <<endl <<endl << pcnn_image_current<<endl<<endl<<endl<<endl<<endl<<endl<<endl<<endl;
 			pcnn_images.push_back(pcnn_image_current);
 		}
 
-		Mat pcnn_view = pcnn_images[3];
-
 		namedWindow("RGB image", CV_WINDOW_AUTOSIZE);
 		namedWindow("HSI image", CV_WINDOW_AUTOSIZE);
-		namedWindow("pcnn result", CV_WINDOW_AUTOSIZE);
 /*
 		resize(src, src, Size(640, 360), 0, 0, INTER_CUBIC);
 		resize(hsi, hsi, Size(640, 360), 0, 0, INTER_CUBIC);
@@ -229,7 +223,39 @@ int main( int argc, char** argv )
 		*/
 		imshow("RGB image", src);
 		imshow("HSI image", hsi);
-		imshow("pcnn result", pcnn_view);
+
+		namedWindow("pcnn result 1", CV_WINDOW_AUTOSIZE);
+		imshow("pcnn result 1", pcnn_images[1]);
+
+		namedWindow("pcnn result 3", CV_WINDOW_AUTOSIZE);
+		imshow("pcnn result 3", pcnn_images[3]);
+
+		namedWindow("pcnn result 5", CV_WINDOW_AUTOSIZE);
+		imshow("pcnn result 5", pcnn_images[5]);
+
+		namedWindow("pcnn result 7", CV_WINDOW_AUTOSIZE);
+		imshow("pcnn result 7", pcnn_images[7]);
+
+		namedWindow("pcnn result 9", CV_WINDOW_AUTOSIZE);
+		imshow("pcnn result 9", pcnn_images[9]);
+
+		namedWindow("pcnn result 11", CV_WINDOW_AUTOSIZE);
+		imshow("pcnn result 11", pcnn_images[11]);
+		
+		namedWindow("pcnn result 13", CV_WINDOW_AUTOSIZE);
+		imshow("pcnn result 13", pcnn_images[13]);
+
+		namedWindow("pcnn result 15", CV_WINDOW_AUTOSIZE);
+		imshow("pcnn result 15", pcnn_images[15]);
+
+		namedWindow("pcnn result 17", CV_WINDOW_AUTOSIZE);
+		imshow("pcnn result 17", pcnn_images[17]);
+
+		namedWindow("pcnn result 19", CV_WINDOW_AUTOSIZE);
+		imshow("pcnn result 19", pcnn_images[19]);
+
+		// Following for is a basic sketch of what's needed for tiling and scaling the images corresponding
+		// to the pulsed output of PCNN in a single window. It's not a priority right now. 
 
 	/*	Mat display = Mat::zeros( src.rows, (2*src.cols) + (20), src.type() );
 

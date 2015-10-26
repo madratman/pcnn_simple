@@ -73,39 +73,52 @@ void pcnn::calculate_states(const pcnn_stimulus & stimulus, const unsigned int c
         	const int upper_row_index = node_row_index - 1;
        		const int lower_row_index = node_row_index + 1;
        		// cout<< "index " << index << ", neighbor "<<  current  << ", stimulus " << stimulus[index] <<endl;
-       		// cout<< " linking_influence "<< linking_influence <<endl;
 
-     	    if ((current == upper_left_index) && (upper_left_index >= 0) && (std::floor(upper_left_index / m_width) == upper_row_index))
-					linking_influence += output_neighbor * m_params.W[0];				
+     	    if ((current == upper_left_index) && (upper_left_index >= 0) && (std::floor(upper_left_index / m_width) == upper_row_index)){
+					linking_influence += output_neighbor * m_params.W[0];
+					// if( output_neighbor == 1)
+					// 	cout << linking_influence<<endl;
+					// cout << "index " << index <<". upper_left_index. " << output_neighbor<<endl;
+					// cout << "index " << index << "  " << " step " << current_step<< endl; 
+				}				
 			
-			if ((current == upper_index) && upper_index >= 0)
+			if ((current == upper_index) && upper_index >= 0){
 					linking_influence += output_neighbor * m_params.W[1];
+				}
        		
-       		if ((current == upper_right_index) && (upper_right_index >= 0) && (std::floor(upper_right_index / m_width) == upper_row_index))
+       		if ((current == upper_right_index) && (upper_right_index >= 0) && (std::floor(upper_right_index / m_width) == upper_row_index)){
 					linking_influence += output_neighbor * m_params.W[2];
+				}
 
-
-	        if ((current == left_index) && (left_index >= 0) && (std::floor(left_index / m_width) == node_row_index))
+	        if ((current == left_index) && (left_index >= 0) && (std::floor(left_index / m_width) == node_row_index)){
 					linking_influence += output_neighbor * m_params.W[3];
+				}
  			
- 			if (index == current)
+ 			if (index == current){
 					linking_influence += output_neighbor * m_params.W[4];
+				}
 	        
-	        if ((current == right_index) && (right_index < size()) && (std::floor(right_index / m_width) == node_row_index))
+	        if ((current == right_index) && (right_index < size()) && (std::floor(right_index / m_width) == node_row_index)){
 					linking_influence += output_neighbor * m_params.W[5];
+				}
 
      	  
-     	    if ((current == lower_left_index) && (lower_right_index < size()) && (std::floor(lower_left_index / m_width) == upper_row_index))
-					linking_influence += output_neighbor * m_params.W[6];				
+     	    if ((current == lower_left_index) && (lower_right_index < size()) && (std::floor(lower_left_index / m_width) == upper_row_index)){
+					linking_influence += output_neighbor * m_params.W[6];
+					}				
 			
-			if ((current == lower_index) && (lower_index < size()))
+			if ((current == lower_index) && (lower_index < size())){
 					linking_influence += output_neighbor * m_params.W[7];
+				}
        		
-       		if ((current == lower_right_index) && (lower_right_index < size()) && (std::floor(lower_right_index / m_width) == upper_row_index))
+       		if ((current == lower_right_index) && (lower_right_index < size()) && (std::floor(lower_right_index / m_width) == upper_row_index)){
 					linking_influence += output_neighbor * m_params.W[8];
+				}
 			
 		}
 
+   		// cout<< " linking_influence "<< linking_influence << ". feeding_influence "<< feeding_influence <<endl;
+		
 		// heavily simplified!
 		feeding[index] = feeding_influence;
 		linking[index] = linking_influence;
@@ -131,7 +144,9 @@ void pcnn::calculate_states(const pcnn_stimulus & stimulus, const unsigned int c
 
 	/* find minimum internal energy so as to set the threshold for next time step */
 	auto internal_activity_min_ptr = std::min(internal_activity_vector.begin(), internal_activity_vector.end());
+	auto internal_activity_max_ptr = std::max(internal_activity_vector.begin(), internal_activity_vector.end());
 	double internal_activity_min = *internal_activity_min_ptr;
+	double internal_activity_max = *internal_activity_max_ptr;
 
 	/* update states of oscillators */
 	for (unsigned int index = 0; index < size(); index++) {
@@ -146,7 +161,10 @@ void pcnn::calculate_states(const pcnn_stimulus & stimulus, const unsigned int c
 			oscillator.threshold -= m_params.step_value; // decrease threshold by step value
 		}
 		else{
-			oscillator.threshold *= m_params.AT; // penalize if it has pulsed
+			oscillator.threshold *= m_params.VT; // penalize if it has pulsed
+			if(oscillator.threshold > 255)
+				oscillator.threshold = 255;
+			// oscillator.threshold = internal_activity_max; // penalize if it has pulsed
 		}
 	}
 	// std::cout<<"calculate_states ";
