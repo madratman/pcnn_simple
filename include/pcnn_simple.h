@@ -13,12 +13,14 @@ typedef struct pcnn_oscillator {
 	double feeding;
 	double linking;
 	double threshold;
+	double cumulative_output_of_neighbors;
 
 	pcnn_oscillator(void) :
 		output(0.0),
 		feeding(0.0),
 		linking(0.0),
-		threshold(0.0) { }
+		threshold(0.0),
+		cumulative_output_of_neighbors(0.0) { }
 } pcnn_oscillator;
 
 const int PCNN_NO_OF_STEPS = 20;
@@ -47,8 +49,8 @@ typedef std::vector<unsigned int>		pcnn_time_signal;
 typedef struct pcnn_network_state {
 public:
 	std::vector<double> m_output;
-
 	double				m_time;
+	std::vector<double> m_noisy_oscillators_indices;
 
 public:
 	inline size_t size(void) const { return m_output.size(); }
@@ -80,6 +82,8 @@ public:
 	void allocate_spike_ensembles(ensemble_data<pcnn_ensemble> & spike_ensembles) const;
 
 	void allocate_time_signal(pcnn_time_signal & time_signal) const;
+
+	void return_noisy_indices(std::vector< std::vector<double> > indices) const;
 
 public:
     /***********************************************************************************************

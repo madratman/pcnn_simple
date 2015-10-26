@@ -40,6 +40,7 @@ void pcnn::calculate_states(const pcnn_stimulus & stimulus, const unsigned int c
 	std::vector<double> feeding(size(), 0.0);
 	std::vector<double> linking(size(), 0.0);
 	std::vector<double> outputs(size(), 0.0);
+	std::vector<double> neighbor_output_sum_vector(size(), 0.0);
 	auto stimulus_max_ptr = std::max_element(stimulus.begin(), stimulus.end());
 	double initial_threshold = *stimulus_max_ptr + 0.01;
 	std::vector<double> internal_activity_vector;
@@ -51,6 +52,7 @@ void pcnn::calculate_states(const pcnn_stimulus & stimulus, const unsigned int c
 
 		double feeding_influence = stimulus[index];
 		double linking_influence = 0.0;
+		double neighbor_output_sum = 0.0;
 
 		for (std::vector<size_t>::const_iterator iter = neighbors.begin(); iter != neighbors.end(); iter++) {
 			// output_neighbour is the value of output of the current neighbouring oscillator
@@ -94,10 +96,6 @@ void pcnn::calculate_states(const pcnn_stimulus & stimulus, const unsigned int c
 					linking_influence += output_neighbor * m_params.W[3];
 				}
  			
- 			if (index == current){
-					linking_influence += output_neighbor * m_params.W[4];
-				}
-	        
 	        if ((current == right_index) && (right_index < size()) && (std::floor(right_index / m_width) == node_row_index)){
 					linking_influence += output_neighbor * m_params.W[5];
 				}
@@ -115,6 +113,8 @@ void pcnn::calculate_states(const pcnn_stimulus & stimulus, const unsigned int c
 					linking_influence += output_neighbor * m_params.W[8];
 				}
 			
+			// track the cumulative output of neighbours
+			neighbor_output_sum += output_neighbor;
 		}
 
    		// cout<< " linking_influence "<< linking_influence << ". feeding_influence "<< feeding_influence <<endl;
@@ -122,6 +122,7 @@ void pcnn::calculate_states(const pcnn_stimulus & stimulus, const unsigned int c
 		// heavily simplified!
 		feeding[index] = feeding_influence;
 		linking[index] = linking_influence;
+		neighbor_output_sum_vector[index] = neighbor_output_sum;
 
 		/* calculate internal activity */
 		double internal_activity = feeding[index] + (m_params.B * linking[index]);
@@ -139,7 +140,7 @@ void pcnn::calculate_states(const pcnn_stimulus & stimulus, const unsigned int c
 		else {
 			outputs[index] = OUTPUT_INACTIVE_STATE;
 		}
-		// cout << "internal_activity " << internal_activity << ", current_oscillator.threshold "<<current_oscillator.threshold<< ", output "<< outputs[index]<<endl;
+		// cout << "internal_activity " << internal_activity << ", current_oscillator.threshold "<<current_oscillator.threshold<< ", output "<< outputs[index]<<endl;		
 	}
 
 	/* find minimum internal energy so as to set the threshold for next time step */
@@ -155,6 +156,7 @@ void pcnn::calculate_states(const pcnn_stimulus & stimulus, const unsigned int c
 		oscillator.feeding = feeding[index];
 		oscillator.linking = linking[index];
 		oscillator.output = outputs[index];
+		oscillator.cumulative_output_of_neighbors = neighbor_output_sum_vector[index];
 		// cout << "test outputs in calculate_states " << outputs[index]<<endl;
 		// cout << "test m_osc in calculate_states " << oscillator.output<<endl;
 		if(oscillator.output == OUTPUT_INACTIVE_STATE){
@@ -178,6 +180,10 @@ void pcnn::store_dynamic(const unsigned int step, pcnn_dynamic & dynamic) {
 	for (size_t i = 0; i < m_oscillators.size(); i++) {
 		// cout <<  "inside store_dynamic, output "<< m_oscillators[i].output<<endl;
 		current_state.m_output[i] = m_oscillators[i].output;
+
+		if( (m_oscillators[i].output == OUTPUT_ACTIVE_STATE && m_oscillators[i].cumulative_output_of_neighbors < 1) || (m_oscillators[i].output == OUTPUT_INACTIVE_STATE && m_oscillators[i].cumulative_output_of_neighbors > 5) ){
+			current_state.m_noisy_oscillators_indices.push_back(i);	
+		}
 	}
 	// std::cout<<"store_dynamic"<<std::endl;
 }
@@ -240,5 +246,12 @@ void pcnn_dynamic::allocate_time_signal(pcnn_time_signal & time_signal) const {
 				time_signal[t]++;
 			}
 		}
+	}
+}
+
+void pcnn_dynamic::return_noisy_indices(vector< vector<double> > indices) const {
+	for (const_iterator iter_state = cbegin(); iter_state != cend(); iter_state++) {
+		const pcnn_network_state & state_network = (*iter_state);
+		indices.push_back(state_network.m_noisy_oscillators_indices);
 	}
 }
