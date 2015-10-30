@@ -26,7 +26,7 @@ void pcnn::simulate(const unsigned int steps, const pcnn_stimulus & stimulus, pc
 	output_dynamic.resize(steps, size());
 
 	for (unsigned int current_time_step = 0; current_time_step < steps; current_time_step++) {
-		std::cout<<"currently simulating at step no "<< current_time_step << std::endl;;
+		// std::cout<<"currently simulating at step no "<< current_time_step << std::endl;;
 		calculate_states(stimulus, current_time_step);
 		// for (unsigned int index = 0; index < size(); index++) 
 		// 	cout << "step " << current_time_step <<", test m_osc in pcnn::simulate " << m_oscillators[index].output<<endl;
@@ -78,8 +78,7 @@ void pcnn::calculate_states(const pcnn_stimulus & stimulus, const unsigned int c
 
      	    if ((current == upper_left_index) && (upper_left_index >= 0) && (std::floor(upper_left_index / m_width) == upper_row_index)){
 					linking_influence += output_neighbor * m_params.W[0];
-					// if( output_neighbor == 1)
-					// 	cout << linking_influence<<endl;
+					// cout << linking_influence<<endl;
 					// cout << "index " << index <<". upper_left_index. " << output_neighbor<<endl;
 					// cout << "index " << index << "  " << " step " << current_step<< endl; 
 				}				
@@ -235,6 +234,7 @@ void pcnn_dynamic::allocate_spike_ensembles(ensemble_data<pcnn_ensemble> & ensem
 	}
 }
 
+/* This is the "time signature" feature. Used for feature extraction. http://www.sciencedirect.com/science/article/pii/S0262885609001346 */
 void pcnn_dynamic::allocate_time_signal(pcnn_time_signal & time_signal) const {
 	time_signal.resize(size());
 
@@ -249,9 +249,29 @@ void pcnn_dynamic::allocate_time_signal(pcnn_time_signal & time_signal) const {
 	}
 }
 
-void pcnn_dynamic::return_noisy_indices(vector< vector<double> > indices) const {
+void pcnn_dynamic::allocate_noisy_indices(vector< vector<double> > & indices) const {
 	for (const_iterator iter_state = cbegin(); iter_state != cend(); iter_state++) {
 		const pcnn_network_state & state_network = (*iter_state);
 		indices.push_back(state_network.m_noisy_oscillators_indices);
+	}
+}
+
+// A matrix that stores the time step when the particular neuron *first* fired
+// FTM(i)(j) = 1, if output at current time step = 1;
+// else FTM(i)(j) = FTM(i)(j); 
+// Initially set to a zero matrix only 
+void pcnn_dynamic::allocate_fire_time_matrix(vector<double> & fire_time_matrix) const {
+	fire_time_matrix.assign(number_oscillators(), 0.0);
+	for (const_iterator iter_state = cbegin(); iter_state != cend(); iter_state++) 
+	{
+		auto current_time_step = iter_state - cbegin();
+		const pcnn_network_state & state_network = (*iter_state);
+
+		for (unsigned int i = 0; i < number_oscillators(); i++) {
+			if (state_network.m_output[i] == OUTPUT_ACTIVE_STATE) {
+				fire_time_matrix[i] = current_time_step;
+			// else do nothing, it is already zero
+			}
+		}
 	}
 }
