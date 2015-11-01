@@ -23,10 +23,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 **************************************************************************************************************/
 
 #include "kmeans.h"
-// #include "support.h"
-
 #include <algorithm>
 #include <limits>
+
+namespace kmeans_namespace{
 
 #define FAST_SOLUTION
 
@@ -49,6 +49,27 @@ inline double euclidean_distance_sqrt(const std::vector<double> * const point1, 
 	}
 
 	return distance;
+}
+
+/***********************************************************************************************
+ *
+ * @brief   Calculates Euclidean distance between points.
+ *
+ * @param   (in) point1     - point #1 that is represented by coordinates.
+ *          (in) point2     - point #2 that is represented by coordinates.
+ *
+ * @return  Returns Euclidean distance between points.
+ *
+ ***********************************************************************************************/
+inline double euclidean_distance(const std::vector<double> * const point1, const std::vector<double> * const point2) {
+	double distance = 0.0;
+	/* assert(point1->size() != point1->size()); */
+	for (unsigned int dimension = 0; dimension < point1->size(); dimension++) {
+		double difference = (point1->data()[dimension] - point2->data()[dimension]);
+		distance += difference * difference;
+	}
+
+	return std::sqrt(distance);
 }
 
 kmeans::kmeans(const std::vector<std::vector<double> > * const data, const std::vector<std::vector<double> > * const initial_centers, const double minimum_change) {
@@ -169,3 +190,5 @@ double kmeans::update_centers(void) {
 
 	return maximum_change;
 }
+
+} // namespace_kmeans

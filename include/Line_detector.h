@@ -76,6 +76,9 @@ class Line_detector
         Line_detector(std::vector<Vec4i> original_lines); /* ensure a vector is passed if only one line is spitted out by HT */
         cv::Vec4i remove_duplicates(); // returns vector of openCV lines 
         std::vector<cv::Vec4i> from_Lines_struct_to_opencv_lines(std::vector<Line> line_struct_vector); // utility method to convert from variable unique_lines_ to a vector of openCV lines (vector<Vec4i>) 
+        std::vector<double> return_unique_angles();
+        std::vector<double> return_original_angles();
+        std::vector< std::vector<double> > return_original_angle_and_dist_from_origin();
         cv::Vec4i from_Lines_struct_to_opencv_lines(Line line_struct);
 
         std::vector<Line> original_lines_;

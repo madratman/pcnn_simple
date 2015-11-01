@@ -27,6 +27,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <vector>
 
+namespace kmeans_namespace{
+
 class kmeans {
 private:
 	std::vector<std::vector<double> >			* dataset;
@@ -53,3 +55,5 @@ private:
 };
 
 #endif
+
+} //namespace_kmeans

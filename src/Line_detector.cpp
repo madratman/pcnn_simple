@@ -110,8 +110,48 @@ cv::Vec4i Line_detector::remove_duplicates()
             best = unique_lines_[i];
         }
     }
-    // convert back to openCV lines and return 
+    // Return the best line
     Vec4i opencv_lines = from_Lines_struct_to_opencv_lines(best);
     
+    // Return unique lines
+    // std::vector<Vec4i> opencv_lines = from_Lines_struct_to_opencv_lines(unique_lines_);
+    
     return opencv_lines;
+}
+
+std::vector<double> Line_detector::return_original_angles()
+{
+    std::vector<double> original_angles;
+    for(auto current_line = original_lines_.begin(); current_line != original_lines_.end(); current_line++)
+    {
+        original_angles.push_back(current_line -> angle_);
+
+    }
+    return original_angles;
+}
+
+std::vector<double> Line_detector::return_unique_angles()
+{
+    std::vector<double> unique_angles;
+    for(auto current_line = unique_lines_.begin(); current_line != unique_lines_.end(); current_line++)
+    {
+        unique_angles.push_back(current_line -> angle_);
+
+    }
+    return unique_angles;
+}
+
+std::vector< std::vector<double> > Line_detector::return_original_angle_and_dist_from_origin()
+{
+    std::vector< std::vector<double> > result;
+    result.resize(original_lines_.size());
+
+    for(int i = 0; i < original_lines_.size(); i++)
+    {
+        auto current_line = original_lines_[i];
+        result[i].resize(2);
+        result[i][0] = current_line.dist_from_origin_;
+        result[i][1] = current_line.angle_;
+    }
+    return result;
 }

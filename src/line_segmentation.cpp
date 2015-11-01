@@ -1,17 +1,18 @@
 #include "pcnn_simple.h"
 #include "network.h"
-#include <unordered_set>
+#include "kmeans.h"
+#include "Line_detector.h"
 
 #include "opencv2/highgui/highgui.hpp"
 #include "opencv2/imgproc/imgproc.hpp"
 #include <iostream>
 #include <stdio.h>
+#include <unordered_set>
 
-using namespace cv;
 using namespace std; // hashtag bad practice
 
-Mat src, edges;
-Mat src_gray;
+cv::Mat src, edges;
+cv::Mat src_gray;
 
 /* Trackbars and their lower and upper limits */
 
@@ -119,14 +120,14 @@ void pcnn_ensemble_simulate(
 	/////* Not needed right now ends */////
 }
 
-Mat detect_edges(Mat binary_n, Mat binary_n_plus_1)
+cv::Mat detect_edges(cv::Mat binary_n, cv::Mat binary_n_plus_1)
 {
-	Mat edge_map(binary_n.rows, binary_n.cols, binary_n.type());
+	cv::Mat edge_map(binary_n.rows, binary_n.cols, binary_n.type());
 	bitwise_or(binary_n, binary_n_plus_1, edge_map);
 	return edge_map;
 }
 
-int animated_display(char* window_name, Mat image, int animation_delay)
+int animated_display(char* window_name, cv::Mat image, int animation_delay)
 {
 	imshow(window_name, image);
 	int c = waitKey(animation_delay);
@@ -168,7 +169,7 @@ int main( int argc, char** argv )
 		}
 
 		resize(src, src, Size(640, 480), 0, 0, INTER_CUBIC);
-		Mat hsi(src.rows, src.cols, CV_8UC1);
+		cv::Mat hsi(src.rows, src.cols, CV_8UC1);
 
 		// convert current frame from RGB to HSI. The "quantized" I value will be used as a stimulus to the PCNN filter. 
 		std::cout << src.rows << " "<< src.cols<<endl;
@@ -214,7 +215,7 @@ int main( int argc, char** argv )
 
 		// populate a vector of fake grayscale openCV image to visualize what's going on.
 		// Following block could be optimized. But in the end, we ll need to visualize at a specified time step only, so it doesn't matter
-		vector<Mat> pcnn_images;
+		vector<cv::Mat> pcnn_images;
 		vector<double> pcnn_result_current_step;
 
 		cout<<src.rows <<"  " <<src.cols<<endl;
@@ -238,17 +239,17 @@ int main( int argc, char** argv )
 		    // Find (dark and light) noisy pixels and apply median filter
 		}
 
-	 	Mat image_original = pcnn_images[1]; 
-	    Mat image_after_canny; 
-	    Mat hough_standard_result; 
-	    Mat hough_prob_result; 
+	 	cv::Mat image_original = pcnn_images[1]; 
+	    cv::Mat image_after_canny; 
+	    cv::Mat hough_standard_result; 
+	    cv::Mat hough_prob_result; 
 
 	    vector<Vec4i> opencv_lines; // lines detected by hough transform
 	    vector<Vec4i> unique_lines; // unique lines returned by Line_detector::remove_duplicates()
 	    Vec4i best_line;
 
 	    vector<float> lengths;
-	    vector<float> angles; 
+	    vector<double> angles; 
 	    vector<float> distance_from_origin;
 	    vector<int> x_1_points;
 	    vector<int> x_2_points;
@@ -272,6 +273,7 @@ int main( int argc, char** argv )
 	    cvtColor(image_after_canny, hough_prob_result, COLOR_GRAY2BGR);
 	    HoughLinesP(image_after_canny, opencv_lines, 1, CV_PI/180, lower_hough_prob_min_no_of_intersections_trackbar + hough_prob_min_no_of_intersections_trackbar, lower_hough_prob_min_no_of_points_trackbar + hough_prob_min_no_of_points_trackbar, lower_hough_prob_max_gap_bw_points_trackbar + hough_prob_max_gap_bw_points_trackbar);
 
+	    Line_detector filtered_lines(opencv_lines);
 	    for (int i=0; i<opencv_lines.size(); i++)
 	    {
 	    	Vec4i current_line = opencv_lines[i];
@@ -280,7 +282,34 @@ int main( int argc, char** argv )
 			circle(src, Point(current_line[2],current_line[3]), 10, Scalar(0,255,0), 3, 8); // plots green circle at second end point
 	    }
 
+        // Filter out duplicates : combine fragment lines + multiple parallel lines
+	/*    Line_detector filtered_lines(opencv_lines);
+	    best_line = filtered_lines.remove_duplicates();
+	    line(src, Point(best_line[0], best_line[1]), Point(best_line[2], best_line[3]), Scalar(255,0,0), 3, CV_AA);
+	    circle(src, Point(best_line[0],best_line[1]), 10, Scalar(0,0,255), 3, 8); // plots red circle at first end point
+	    circle(src, Point(best_line[2],best_line[3]), 10, Scalar(0,255,0), 3, 8); // plots green circle at second end point
+        */
 	    cout << "number of detected lines are " << opencv_lines.size() << endl; 
+
+	    angles = filtered_lines.return_original_angles();
+
+	    std::vector< std::vector<double> > kmeans_data;
+	    kmeans_data = filtered_lines.return_original_angle_and_dist_from_origin();
+	    const std::vector< std::vector<double> > kmeans_data_const = kmeans_data;
+	    const std::vector< std::vector<double> > * kmeans_data_ptr = &kmeans_data_const;
+
+	    std::vector< std::vector<double> > kmeans_centers;
+    	kmeans_centers.resize(opencv_lines.size(), std::vector<double> (2, 0.0));
+	    const std::vector< std::vector<double> > kmeans_centers_const = kmeans_centers;
+	    const std::vector< std::vector<double> > * kmeans_centers_ptr = &kmeans_centers_const;
+
+	    const double kmeans_tolerance = 0.0;
+
+	    kmeans_namespace::kmeans kmeans_instance(kmeans_data_ptr, kmeans_centers_ptr, kmeans_tolerance);
+	    kmeans_instance.process();
+
+	    const std::vector< std::vector<unsigned int> *>* kmeans_result;
+	    kmeans_result = kmeans_instance.get_clusters();
 
         imshow(hough_prob_window, hough_prob_result);
 
@@ -297,7 +326,7 @@ int main( int argc, char** argv )
 		imshow("pcnn result 2", pcnn_images[2]);
 
 		// TODO: XOR edge map
-		Mat edge_map = detect_edges(pcnn_images[1], pcnn_images[2]);
+		cv::Mat edge_map = detect_edges(pcnn_images[1], pcnn_images[2]);
 
 		namedWindow("edge_map", CV_WINDOW_AUTOSIZE);
 		imshow("edge_map", edge_map);
@@ -344,13 +373,13 @@ int main( int argc, char** argv )
 		// Following for is a basic sketch of what's needed for tiling and scaling the images corresponding
 		// to the pulsed output of PCNN in a single window. It's not a priority right now. 
 
-	/*	Mat display = Mat::zeros( src.rows, (2*src.cols) + (20), src.type() );
+	/*	cv::Mat display = cv::Mat::zeros( src.rows, (2*src.cols) + (20), src.type() );
 
 		//club orginal and pcnn output together in a single window
 		src.copyTo(at(display, Rect(0, 0, src.cols, src.rows)));
-		pcnn_output.copyTo(Mat(display, Rect(src.cols + 20, 0, src.cols, src.rows)));
+		pcnn_output.copyTo(cv::Mat(display, Rect(src.cols + 20, 0, src.cols, src.rows)));
 
-		Mat display_resized;
+		cv::Mat display_resized;
 		resize(display, display_resized, Size(), 0.5, 0.5, INTER_CUBIC); // upscale 2x
 
 		imshow(original, display_resized);

@@ -16,4 +16,4 @@ add_library(Line_detector_class src/Line_detector.cpp)
 add_executable(line_segmentation src/line_segmentation.cpp)
 
 target_link_libraries(pcnn_simple network)
-target_link_libraries(line_segmentation pcnn_simple network Line_detector_class ${OpenCV_LIBS})
+target_link_libraries(line_segmentation pcnn_simple network Line_detector_class kmeans ${OpenCV_LIBS})
