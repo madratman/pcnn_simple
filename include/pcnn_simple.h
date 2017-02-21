@@ -21,12 +21,13 @@ typedef struct pcnn_oscillator {
 		threshold(0.0) { }
 } pcnn_oscillator;
 
-const int PCNN_NO_OF_STEPS = 20;
+// const int PCNN_NO_OF_STEPS = 10;
+const int PCNN_NO_OF_STEPS = 5;
 
 typedef struct pcnn_parameters {
     
     // Multiplier for the threshold at the current step.    
-    double VT = 1.2;
+    double VT = 2;
     
     // Synaptic weight - neighbours influence on linking compartment
     std::vector<double> W = {sqrt(1/2), 1.0, sqrt(1/2),

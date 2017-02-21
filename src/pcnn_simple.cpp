@@ -26,7 +26,7 @@ void pcnn::simulate(const unsigned int steps, const pcnn_stimulus & stimulus, pc
 	output_dynamic.resize(steps, size());
 
 	for (unsigned int current_time_step = 0; current_time_step < steps; current_time_step++) {
-		std::cout<<"currently simulating at step no "<< current_time_step << std::endl;;
+		// std::cout<<"currently simulating at step no "<< current_time_step << std::endl;;
 		calculate_states(stimulus, current_time_step);
 		// for (unsigned int index = 0; index < size(); index++) 
 		// 	cout << "step " << current_time_step <<", test m_osc in pcnn::simulate " << m_oscillators[index].output<<endl;

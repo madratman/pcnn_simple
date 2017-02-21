@@ -21,8 +21,6 @@ Mat src_gray;
 // - the edge of image Bin can be obtained by logical operation exclusive disjunction (XOR) 
 // on Y0 and Y : Edge = Y0 ⊕ Y
 
-// how to check for inf (std::numeric_limits<double>::max()) ? It will anyway return an error (hardware segfault).
-
 vector< vector<double> > pcnn_dynamic_get_output(pcnn_dynamic dynamic, int num_osc) 
 {
 	vector< vector<double> > pcnn_data;
@@ -91,8 +89,6 @@ vector< vector<double> >  pcnn_ensemble_simulate(
 
 	return pcnn_state;
 
-	/////* Not needed right now */////
-
 	/* minidoc so that my head doesn't spin after a week reading this code */	
 
 	// pcnn_ensemble data type is basically a typedef of std::vector<unsigned int>;
@@ -106,21 +102,6 @@ vector< vector<double> >  pcnn_ensemble_simulate(
 	// Finally pcnn_time_signal is a typedef of typedef std::vector<unsigned int>	
 
 	/* minidoc ends */
-
-	// ensemble_data<pcnn_ensemble> sync_ensembles; /* holder for synchronous oscillators in the current time step */
-	// ensemble_data<pcnn_ensemble> spike_ensembles;
-	// pcnn_time_signal time_signal;
-	
-	// // Allocate clusters in line with ensembles of synchronous oscillators where each synchronous ensemble corresponds to only one cluster.
-	// dynamic.allocate_sync_ensembles(sync_ensembles);
-	
-	// // Analyses output dynamic of network and allocates spikes on each iteration as a list of indexes of oscillators.
-	// dynamic.allocate_spike_ensembles(spike_ensembles);
-	
-	// // Analyses output dynamic and calculates time signal (signal vector information) of network output.
-	// dynamic.allocate_time_signal(time_signal);
-
-	/////* Not needed right now ends */////
 }
 
 int main( int argc, char** argv )
@@ -148,131 +129,74 @@ int main( int argc, char** argv )
     int pcnn_steps = PCNN_NO_OF_STEPS; // no of pulses/iterations of PCNN.  
 
 
-	// for(;;)
-	// {
-		// Read the current frame from the video
-		// input_video >> src;
-		src = imread(argv[1], CV_LOAD_IMAGE_COLOR); 
-		if(src.empty())
-		{ 
-			std::cout<<"couldn't read image!"<<std::endl;
+	src = imread(argv[1], CV_LOAD_IMAGE_COLOR); 
+	if(src.empty())
+	{ 
+		std::cout<<"couldn't read image!"<<std::endl;
+	}
+
+	Mat hsi(src.rows, src.cols, src.type());
+
+	// convert current frame from RGB to HSI. The "quantized" I value will be used as a stimulus to the PCNN filter. 
+	// std::cout << src.rows << " "<< src.cols<<endl;
+
+	for(int i = 0; i < src.rows; i++)
+	{
+		for(int j = 0; j < src.cols; j++)
+		{
+			blue = src.at<Vec3b>(i, j)[0];
+			green = src.at<Vec3b>(i, j)[1];
+			red = src.at<Vec3b>(i, j)[2];
+
+			intensity = (blue + green + red) / 3; // [0, 255]
+			intensity_quantized = floor(intensity/25); // quantized intensity, in 64 levels. [0:1;63]
+			intensity_quantized_visualize = 25*intensity_quantized; // throttle up to [0:4:255] to visualize what's going on 
+	
+			// the intensity_quantized is the input to our PCNN. 
+			// std::cout<< i << "   " << j << "    " << intensity<<endl;
+			pcnn_stimulus_intensity.push_back(intensity);
+
+			hsi.at<Vec3b>(i, j)[0] = intensity_quantized_visualize; // [0:1:63]
+			hsi.at<Vec3b>(i, j)[1] = intensity_quantized_visualize; // [0:1:63]
+			hsi.at<Vec3b>(i, j)[2] = intensity_quantized_visualize; // [0:1:63]
+
 		}
-		resize(src, src, Size(640, 360), 0, 0, INTER_CUBIC);
-		// resize(src, src, Size(640, 360), 0, 0, INTER_CUBIC);
-		Mat hsi(src.rows, src.cols, src.type());
+	}
 
-		// convert current frame from RGB to HSI. The "quantized" I value will be used as a stimulus to the PCNN filter. 
-		std::cout << src.rows << " "<< src.cols<<endl;
+	vector< vector<double> > pcnn_result;
+	pcnn_result = pcnn_ensemble_simulate(pcnn_stimulus_intensity.size(), pcnn_steps, conn_type::GRID_EIGHT, pcnn_stimulus_intensity, src.rows, src.cols);
 
+	// populate a vector of fake grayscale openCV image to visualize what's going on.
+	// Following block could be optimized. But in the end, we ll need to visualize at a specified time step only, so it doesn't matter
+	vector<Mat> pcnn_images;
+	vector<double> pcnn_result_current_step;
+
+	// cout<<src.rows <<"  " <<src.cols<<endl;
+	for(int index = 0; index < pcnn_steps; index++)
+	{	
+		pcnn_result_current_step = pcnn_result[index];
+		Mat pcnn_image_current (src.rows, src.cols, src.type());
 		for(int i = 0; i < src.rows; i++)
 		{
 			for(int j = 0; j < src.cols; j++)
 			{
-				blue = src.at<Vec3b>(i, j)[0];
-				green = src.at<Vec3b>(i, j)[1];
-				red = src.at<Vec3b>(i, j)[2];
-
-				intensity = (blue + green + red) / 3; // [0, 255]
-				intensity_quantized = floor(intensity/25); // quantized intensity, in 64 levels. [0:1;63]
-				intensity_quantized_visualize = 25*intensity_quantized; // throttle up to [0:4:255] to visualize what's going on 
-		
-				// the intensity_quantized is the input to our PCNN. 
-				// std::cout<< i << "   " << j << "    " << intensity<<endl;
-				pcnn_stimulus_intensity.push_back(intensity);
-
-				hsi.at<Vec3b>(i, j)[0] = intensity_quantized_visualize; // [0:1:63]
-				hsi.at<Vec3b>(i, j)[1] = intensity_quantized_visualize; // [0:1:63]
-				hsi.at<Vec3b>(i, j)[2] = intensity_quantized_visualize; // [0:1:63]
-
+				pcnn_image_current.at<Vec3b>(i,j)[0] = 255 * (pcnn_result_current_step[i*src.cols +j]);
+				pcnn_image_current.at<Vec3b>(i,j)[1] = 255 * (pcnn_result_current_step[i*src.cols +j]);
+				pcnn_image_current.at<Vec3b>(i,j)[2] = 255 * (pcnn_result_current_step[i*src.cols +j]);
 			}
 		}
 
-		vector< vector<double> > pcnn_result;
-		pcnn_result = pcnn_ensemble_simulate(pcnn_stimulus_intensity.size(), pcnn_steps, conn_type::GRID_EIGHT, pcnn_stimulus_intensity, src.rows, src.cols);
+		pcnn_images.push_back(pcnn_image_current);
+	}
 
-		// populate a vector of fake grayscale openCV image to visualize what's going on.
-		// Following block could be optimized. But in the end, we ll need to visualize at a specified time step only, so it doesn't matter
-		vector<Mat> pcnn_images;
-		vector<double> pcnn_result_current_step;
-
-		cout<<src.rows <<"  " <<src.cols<<endl;
-		for(int index = 0; index < pcnn_steps; index++)
-		{	
-			pcnn_result_current_step = pcnn_result[index];
-			Mat pcnn_image_current (src.rows, src.cols, src.type());
-			for(int i = 0; i < src.rows; i++)
-			{
-				for(int j = 0; j < src.cols; j++)
-				{
-					pcnn_image_current.at<Vec3b>(i,j)[0] = 255 * (pcnn_result_current_step[i*src.cols +j]);
-					pcnn_image_current.at<Vec3b>(i,j)[1] = 255 * (pcnn_result_current_step[i*src.cols +j]);
-					pcnn_image_current.at<Vec3b>(i,j)[2] = 255 * (pcnn_result_current_step[i*src.cols +j]);
-				}
-			}
-
-			// cout << index <<endl <<endl << pcnn_image_current<<endl<<endl<<endl<<endl<<endl<<endl<<endl<<endl;
-			pcnn_images.push_back(pcnn_image_current);
-		}
-
-		namedWindow("RGB image", CV_WINDOW_AUTOSIZE);
-		namedWindow("HSI image", CV_WINDOW_AUTOSIZE);
-/*
-		resize(src, src, Size(640, 360), 0, 0, INTER_CUBIC);
-		resize(hsi, hsi, Size(640, 360), 0, 0, INTER_CUBIC);
-		resize(pcnn_view, pcnn_view, Size(640, 360), 0, 0, INTER_CUBIC);
-		*/
-		imshow("RGB image", src);
-		imshow("HSI image", hsi);
-
-		namedWindow("pcnn result 1", CV_WINDOW_AUTOSIZE);
-		imshow("pcnn result 1", pcnn_images[1]);
-
-		namedWindow("pcnn result 3", CV_WINDOW_AUTOSIZE);
-		imshow("pcnn result 3", pcnn_images[3]);
-
-		namedWindow("pcnn result 5", CV_WINDOW_AUTOSIZE);
-		imshow("pcnn result 5", pcnn_images[5]);
-
-		namedWindow("pcnn result 7", CV_WINDOW_AUTOSIZE);
-		imshow("pcnn result 7", pcnn_images[7]);
-
-		namedWindow("pcnn result 9", CV_WINDOW_AUTOSIZE);
-		imshow("pcnn result 9", pcnn_images[9]);
-
-		namedWindow("pcnn result 11", CV_WINDOW_AUTOSIZE);
-		imshow("pcnn result 11", pcnn_images[11]);
-		
-		namedWindow("pcnn result 13", CV_WINDOW_AUTOSIZE);
-		imshow("pcnn result 13", pcnn_images[13]);
-
-		namedWindow("pcnn result 15", CV_WINDOW_AUTOSIZE);
-		imshow("pcnn result 15", pcnn_images[15]);
-
-		namedWindow("pcnn result 17", CV_WINDOW_AUTOSIZE);
-		imshow("pcnn result 17", pcnn_images[17]);
-
-		namedWindow("pcnn result 19", CV_WINDOW_AUTOSIZE);
-		imshow("pcnn result 19", pcnn_images[19]);
-
-		// Following for is a basic sketch of what's needed for tiling and scaling the images corresponding
-		// to the pulsed output of PCNN in a single window. It's not a priority right now. 
-
-	/*	Mat display = Mat::zeros( src.rows, (2*src.cols) + (20), src.type() );
-
-		//club orginal and pcnn output together in a single window
-		src.copyTo(at(display, Rect(0, 0, src.cols, src.rows)));
-		pcnn_output.copyTo(Mat(display, Rect(src.cols + 20, 0, src.cols, src.rows)));
-
-		Mat display_resized;
-		resize(display, display_resized, Size(), 0.5, 0.5, INTER_CUBIC); // upscale 2x
-
-		imshow(original, display_resized);
-		
-		// write to output_video
-		output_video << display; */
-
-		// waitKey(1);
+	std::string orig_filename = argv[1];
+	// for(int index = 0; index < pcnn_steps; index++)
+	// {
+	// 	orig_filename = argv[1];
+	// 	imwrite(orig_filename + "_pcnn_" + to_string(index) + ".png", pcnn_images[index]);
 	// }
+	int to_write = 4;
+	imwrite(orig_filename + "_pcnn_" + to_string(to_write) + ".png", pcnn_images[to_write]);
 
 	waitKey(0);
 	return 0;
